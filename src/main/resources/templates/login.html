@@ -284,14 +284,20 @@
 
     // 标签切换
     function switchTab(tabName) {
-        const contents = document.querySelectorAll('. tab-content');
-        contents. forEach(el => el.classList.remove('active'));
+        const contents = document.querySelectorAll('.tab-content');
+        contents.forEach(el => el.classList.remove('active'));
 
-        const tabs = document.querySelectorAll('. tab');
+        const tabs = document.querySelectorAll('.tab');
         tabs.forEach(el => el.classList.remove('active'));
 
         document.getElementById(tabName).classList.add('active');
-        event.target.classList.add('active');
+        
+        // 修正：根据tabName来激活相应的标签
+        if(tabName === 'login') {
+            document.querySelector('.tab:first-child').classList.add('active');
+        } else if(tabName === 'register') {
+            document.querySelector('.tab:last-child').classList.add('active');
+        }
     }
 
     // 更新显示字段
@@ -341,7 +347,7 @@
                 if (data.code === 200) {
                     showSuccess('loginSuccess', '登录成功，正在跳转..  .');
                     setTimeout(() => {
-                        window.location.href = '/fruitshop/index. html';
+                        window.location.href = '/fruitshop/index.html';
                     }, 1500);
                 } else {
                     showError('loginError', data.message || '登录失败');
@@ -374,33 +380,39 @@
             return;
         }
 
-        if (roleId === '3' && !  document.getElementById('sCall').value.trim()) {
+        if (roleId === '3' && !document.getElementById('sCall').value.trim()) {
             showError('registerError', '供应商必须填写联系电话');
             return;
         }
 
-        const params = new URLSearchParams({
-            uId: uId,
+        const requestData = {
+            uId: parseInt(uId),
             password: password,
-            roleId: roleId,
+            roleId: parseInt(roleId),
             remark: name,
             cEmail: document.getElementById('cEmail').value,
             cCity: document.getElementById('cCity').value,
             cZip: document.getElementById('cZip').value,
             cContact: document.getElementById('cContact').value,
             sCity: document.getElementById('sCity').value,
-            sZip:  document.getElementById('sZip').value,
+            sZip: document.getElementById('sZip').value,
             sCall: document.getElementById('sCall').value
-        });
+        };
 
-        console.log('发送注册请求，参数:', params. toString());
+        console.log('发送注册请求，数据:', requestData);
 
         const btn = event.target;
         btn.disabled = true;
         btn.textContent = '注册中...';
 
-        fetch(API_BASE + '/auth/register?' + params.toString(), {
-            method:  'POST'
+        fetch(API_BASE + '/auth/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: Object.keys(requestData).map(key => 
+                encodeURIComponent(key) + '=' + encodeURIComponent(requestData[key])
+            ).join('&')
         })
             .then(response => {
                 console.log('注册响应状态:', response.status);
