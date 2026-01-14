@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>添加供应商 - 水果商城管理系统</title>
+  <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      min-height: 100vh;
+      font-family: "Microsoft YaHei", sans-serif;
+      background-color: #f8f9fa;
+    }
+    .navbar {
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      z-index: 1000;
+    }
+    .navbar-brand {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #fff !important;
+    }
+    .nav-link {
+      color: #fff !important;
+      transition: all 0.3s;
+    }
+    .nav-link:hover {
+      color: #ffc107 !important;
+    }
+    .main-content {
+      padding: 2rem 0;
+    }
+    .container {
+      max-width: 800px;
+    }
+    .card {
+      border: none;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      transition: all 0.3s ease;
+      overflow: hidden;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.12);
+    }
+    .card-header {
+      background-color: #6f42c1;
+      color: #fff;
+      font-weight: 600;
+      border-bottom: none;
+    }
+    .form-control {
+      border-radius: 6px;
+      padding: 0.75rem 1rem;
+    }
+    .btn {
+      border-radius: 6px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    .btn:hover {
+      transform: scale(1.02);
+    }
+    .footer {
+      background-color: #212529;
+      color: #fff;
+      padding: 1.5rem 0;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+    @media (max-width: 768px) {
+      .main-content {
+        padding: 1rem 0;
+      }
+      .card-body {
+        padding: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+<!-- 导航栏 -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+  <div class="container">
+    <a class="navbar-brand" th:href="@{/index.html}">🍎 水果商城管理系统</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item">
+          <a class="nav-link" th:href="@{/index.html}">首页</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" th:href="@{/customer/list}">顾客管理</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" th:href="@{/fruit/list}">水果管理</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" th:href="@{/order/list}">订单管理</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link active" aria-current="page" th:href="@{/supplier/list}">供应商管理</a>
+        </li>
+      </ul>
+      <ul class="navbar-nav">
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+            <span th:text="${session.loginUser?.showName ?: '游客'}">顾客10099</span>
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" th:href="@{/api/auth/logout}">退出登录</a></li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- 主要内容区 -->
+<div class="main-content container">
+  <div class="card">
+    <div class="card-header">
+      <h5 class="mb-0">添加新供应商</h5>
+    </div>
+    <div class="card-body">
+      <form id="supplierForm">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label for="sName" class="form-label">供应商名称 *</label>
+            <input type="text" class="form-control" id="sName" name="sName" required>
+          </div>
+          <div class="col-md-6">
+            <label for="sCity" class="form-label">城市</label>
+            <input type="text" class="form-control" id="sCity" name="sCity">
+          </div>
+          <div class="col-md-6">
+            <label for="sZip" class="form-label">邮编</label>
+            <input type="text" class="form-control" id="sZip" name="sZip">
+          </div>
+          <div class="col-md-6">
+            <label for="sCall" class="form-label">联系电话 *</label>
+            <input type="text" class="form-control" id="sCall" name="sCall" required>
+          </div>
+          <div class="col-md-12">
+            <label for="sRemark" class="form-label">备注</label>
+            <textarea class="form-control" id="sRemark" name="sRemark" rows="3"></textarea>
+          </div>
+        </div>
+
+        <div class="mt-4">
+          <button type="submit" class="btn btn-primary me-2">保存供应商</button>
+          <button type="button" class="btn btn-secondary" onclick="goBack()">返回列表</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- 页脚 -->
+<div class="footer">
+  <p class="mb-0">© 2026 水果商城管理系统 - 版权所有</p>
+</div>
+
+<!-- 引入JS资源 -->
+<script th:src="@{/js/jquery-3.6.4.min.js}"></script>
+<script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+<script th:src="@{/js/axios.min.js}"></script>
+
+<!-- 自定义JS逻辑 -->
+<script>
+  // 表单提交事件
+  $('#supplierForm').on('submit', function(e) {
+    e.preventDefault();
+    saveSupplier();
+  });
+
+  // 保存供应商
+  function saveSupplier() {
+    const supplierData = {
+      sName: $('#sName').val().trim(),
+      sCity: $('#sCity').val().trim(),
+      sZip: $('#sZip').val().trim(),
+      sCall: $('#sCall').val().trim(),
+      sRemark: $('#sRemark').val().trim()
+    };
+
+    // 前端验证
+    if (!supplierData.sName) {
+      alert('请输入供应商名称');
+      return;
+    }
+
+    if (!supplierData.sCall) {
+      alert('请输入联系电话');
+      return;
+    }
+
+    // 发送请求
+    axios.post('/fruitshop/api/supplier/add', supplierData)
+            .then(res => {
+              if (res.data.code === 200) {
+                alert('供应商添加成功！');
+                // 重置表单
+                $('#supplierForm')[0].reset();
+                // 可选择性地跳转到列表页
+                // window.location.href = '/fruitshop/supplier/list';
+              } else {
+                alert('添加失败: ' + res.data.message);
+              }
+            })
+            .catch(err => {
+              console.error('添加供应商失败:', err);
+              alert('添加供应商失败');
+            });
+  }
+
+  // 返回列表
+  function goBack() {
+    window.location.href = '/fruitshop/supplier/list';
+  }
+</script>
+</body>
+</html>

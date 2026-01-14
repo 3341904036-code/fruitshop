@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>数据导出 - 水果商城管理系统</title>
+  <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      min-height: 100vh;
+      font-family: "Microsoft YaHei", sans-serif;
+      background-color: #f8f9fa;
+    }
+    .navbar {
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      z-index: 1000;
+    }
+    .navbar-brand {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #fff !important;
+    }
+    .nav-link {
+      color: #fff !important;
+      transition: all 0.3s;
+    }
+    .nav-link:hover {
+      color: #ffc107 !important;
+    }
+    .main-content {
+      padding: 2rem 0;
+    }
+    .container {
+      max-width: 800px;
+    }
+    .card {
+      border: none;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      transition: all 0.3s ease;
+      overflow: hidden;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.12);
+    }
+    .card-header {
+      background-color: #17a2b8;
+      color: #fff;
+      font-weight: 600;
+      border-bottom: none;
+    }
+    .form-check-input:checked {
+      background-color: #17a2b8;
+      border-color: #17a2b8;
+    }
+    .btn {
+      border-radius: 6px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    .btn:hover {
+      transform: scale(1.02);
+    }
+    .export-option {
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      background-color: #f8f9fa;
+    }
+    .footer {
+      background-color: #212529;
+      color: #fff;
+      padding: 1.5rem 0;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+    @media (max-width: 768px) {
+      .main-content {
+        padding: 1rem 0;
+      }
+      .card-body {
+        padding: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+<!-- 导航栏 -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+  <div class="container">
+    <a class="navbar-brand" th:href="@{/index.html}">🍎 水果商城管理系统</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item">
+          <a class="nav-link" th:href="@{/index.html}">首页</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" th:href="@{/customer/list}">顾客管理</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" th:href="@{/fruit/list}">水果管理</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" th:href="@{/order/list}">订单管理</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" th:href="@{/supplier/list}">供应商管理</a>
+        </li>
+      </ul>
+      <ul class="navbar-nav">
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+            <span th:text="${session.loginUser?.showName ?: '游客'}">顾客10099</span>
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" th:href="@{/api/auth/logout}">退出登录</a></li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- 主要内容区 -->
+<div class="main-content container">
+  <div class="card">
+    <div class="card-header">
+      <h5 class="mb-0">数据导出</h5>
+    </div>
+    <div class="card-body">
+      <div class="mb-4">
+        <h6>选择导出的数据类型：</h6>
+
+        <div class="export-option">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="exportCustomers" checked>
+            <label class="form-check-label" for="exportCustomers">
+              <strong>顾客数据</strong> - 包含所有顾客信息
+            </label>
+          </div>
+        </div>
+
+        <div class="export-option">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="exportFruits" checked>
+            <label class="form-check-label" for="exportFruits">
+              <strong>水果数据</strong> - 包含所有水果信息
+            </label>
+          </div>
+        </div>
+
+        <div class="export-option">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="exportOrders" checked>
+            <label class="form-check-label" for="exportOrders">
+              <strong>订单数据</strong> - 包含所有订单记录
+            </label>
+          </div>
+        </div>
+
+        <div class="export-option">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="exportSuppliers" checked>
+            <label class="form-check-label" for="exportSuppliers">
+              <strong>供应商数据</strong> - 包含所有供应商信息
+            </label>
+          </div>
+        </div>
+
+        <div class="export-option">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="exportStatistics" checked>
+            <label class="form-check-label" for="exportStatistics">
+              <strong>统计报表</strong> - 包含各类统计信息
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <h6>选择导出格式：</h6>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="exportFormat" id="formatExcel" value="excel" checked>
+          <label class="form-check-label" for="formatExcel">
+            Excel (.xlsx) - 推荐用于数据分析
+          </label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="exportFormat" id="formatCSV" value="csv">
+          <label class="form-check-label" for="formatCSV">
+            CSV (.csv) - 通用表格格式
+          </label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="exportFormat" id="formatPDF" value="pdf">
+          <label class="form-check-label" for="formatPDF">
+            PDF (.pdf) - 适合打印和分享
+          </label>
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <h6>导出选项：</h6>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label for="startDate" class="form-label">开始日期</label>
+            <input type="date" class="form-control" id="startDate">
+          </div>
+          <div class="col-md-6">
+            <label for="endDate" class="form-label">结束日期</label>
+            <input type="date" class="form-control" id="endDate">
+          </div>
+        </div>
+        <div class="form-check mt-2">
+          <input class="form-check-input" type="checkbox" id="includeHeaders" checked>
+          <label class="form-check-label" for="includeHeaders">
+            包含列标题
+          </label>
+        </div>
+      </div>
+
+      <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+        <button type="button" class="btn btn-secondary me-md-2" onclick="goBack()">返回</button>
+        <button type="button" class="btn btn-primary" onclick="exportData()">开始导出</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 页脚 -->
+<div class="footer">
+  <p class="mb-0">© 2026 水果商城管理系统 - 版权所有</p>
+</div>
+
+<!-- 引入JS资源 -->
+<script th:src="@{/js/jquery-3.6.4.min.js}"></script>
+<script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+<script th:src="@{/js/axios.min.js}"></script>
+
+<!-- 自定义JS逻辑 -->
+<script>
+  // 导出数据
+  function exportData() {
+    // 获取选中的数据类型
+    const exportTypes = [];
+    if ($('#exportCustomers').is(':checked')) exportTypes.push('customers');
+    if ($('#exportFruits').is(':checked')) exportTypes.push('fruits');
+    if ($('#exportOrders').is(':checked')) exportTypes.push('orders');
+    if ($('#exportSuppliers').is(':checked')) exportTypes.push('suppliers');
+    if ($('#exportStatistics').is(':checked')) exportTypes.push('statistics');
+
+    // 获取导出格式
+    const format = $('input[name="exportFormat"]:checked').val();
+
+    // 获取日期范围
+    const startDate = $('#startDate').val();
+    const endDate = $('#endDate').val();
+    const includeHeaders = $('#includeHeaders').is(':checked');
+
+    // 验证至少选择了一种数据类型
+    if (exportTypes.length === 0) {
+      alert('请至少选择一种数据类型进行导出');
+      return;
+    }
+
+    // 构建导出参数
+    const params = new URLSearchParams({
+      types: exportTypes.join(','),
+      format: format,
+      includeHeaders: includeHeaders
+    });
+
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+
+    // 开始导出（模拟）
+    alert(`开始导出数据...\n类型: ${exportTypes.join(', ')}\n格式: ${format}\n日期范围: ${startDate || '不限'} 至 ${endDate || '不限'}`);
+
+    // 在实际应用中，这里会发起下载请求
+    // window.location.href = `/fruitshop/api/dashboard/export?${params.toString()}`;
+
+    // 模拟导出过程
+    simulateExportProcess();
+  }
+
+  // 模拟导出过程
+  function simulateExportProcess() {
+    const progressBar = $('<div class="progress mt-3"><div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div></div>');
+    $('.card-body').append(progressBar);
+
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += Math.random() * 15;
+      if (progress >= 100) {
+        progress = 100;
+        clearInterval(interval);
+
+        // 模拟导出完成
+        setTimeout(() => {
+          progressBar.remove();
+          alert('数据导出完成！文件已开始下载。');
+        }, 500);
+      }
+
+      progressBar.find('.progress-bar').css('width', progress + '%').attr('aria-valuenow', progress);
+    }, 300);
+  }
+
+  // 返回首页
+  function goBack() {
+    window.location.href = '/fruitshop/index.html';
+  }
+</script>
+</body>
+</html>
