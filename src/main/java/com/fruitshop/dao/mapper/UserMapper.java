@@ -1,8 +1,8 @@
-package com.fruitshop.dao. mapper;
+package com.fruitshop.dao.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.fruitshop.entity.User;
-import org.apache.ibatis.annotations. Mapper;
+import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 import java.util.List;
 

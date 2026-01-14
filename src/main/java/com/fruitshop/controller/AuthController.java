@@ -77,7 +77,6 @@ public class AuthController {
             log.info("注册用户:  uId={}, roleId={}, remark={}", uId, roleId, remark);
 
             boolean result = authService.register(uId, password, remark, roleId, cEmail, cCity, cZip, cContact, sCity, sZip, sCall);
-
             if (result) {
                 log.info("用户注册成功:  uId={}", uId);
                 log.info("========== 注册请求结束 ==========");

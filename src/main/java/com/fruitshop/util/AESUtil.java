@@ -59,10 +59,10 @@ public class AESUtil {
             cipher.init(Cipher.DECRYPT_MODE, keySpec);
 
             // 3. 将十六进制字符串转换为字节数组
-            byte[] encryptedBytes = Hex.decodeHex(ciphertext. toCharArray());
+            byte[] encryptedBytes = Hex.decodeHex(ciphertext.toCharArray());
 
             // 4. 解密
-            byte[] decryptedBytes = cipher. doFinal(encryptedBytes);
+            byte[] decryptedBytes = cipher.doFinal(encryptedBytes);
 
             // 5. 转换为字符串
             return new String(decryptedBytes, StandardCharsets.UTF_8);
@@ -113,11 +113,11 @@ public class AESUtil {
 
         // 加密
         String encrypted = AESUtil.encrypt(plainText);
-        System.out. println("明文:   " + plainText);
+        System.out.println("明文:   " + plainText);
         System.out.println("密文:   " + encrypted);
 
         // 解密
-        String decrypted = AESUtil. decrypt(encrypted);
+        String decrypted = AESUtil.decrypt(encrypted);
         System.out.println("解密:   " + decrypted);
 
         // 验证

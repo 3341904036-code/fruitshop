@@ -1,19 +1,19 @@
 package com.fruitshop.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com. fruitshop.dao.mapper.CustomerMapper;
-import com.fruitshop.dao.mapper. SupplierMapper;
+import com.fruitshop.dao.mapper.CustomerMapper;
+import com.fruitshop.dao.mapper.SupplierMapper;
 import com.fruitshop.dao.mapper.UserMapper;
 import com.fruitshop.dto.LoginDTO;
 import com.fruitshop.entity.Customer;
-import com.fruitshop.entity. Supplier;
+import com.fruitshop.entity.Supplier;
 import com.fruitshop.entity.User;
-import com.fruitshop. exception.BusinessException;
+import com.fruitshop.exception.BusinessException;
 import com.fruitshop.service.AuthService;
 import com.fruitshop.util.AESUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework. beans.factory.annotation.Autowired;
-import org.springframework. stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**

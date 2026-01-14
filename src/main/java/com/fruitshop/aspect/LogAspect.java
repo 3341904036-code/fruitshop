@@ -1,10 +1,10 @@
-package com.fruitshop. aspect;
+package com.fruitshop.aspect;
 
-import lombok.extern.slf4j. Slf4j;
+import lombok.extern.slf4j.Slf4j;
 import org. aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang. annotation.*;
-import org.springframework.stereotype. Component;
+import org.aspectj.lang.annotation.*;
+import org.springframework.stereotype.Component;
 import java.util.Arrays;
 
 /**
@@ -44,7 +44,7 @@ public class LogAspect {
      * 后置返回通知
      */
     @AfterReturning(pointcut = "controllerPointcut() || servicePointcut()", returning = "result")
-    public void afterReturningAdvice(JoinPoint joinPoint, Object result) {
+    public void afterReturningAdvice(JoinPoint joinPoint,Object result) {
         String methodName = joinPoint.getSignature().getName();
         String className = joinPoint.getTarget().getClass().getSimpleName();
         log.info("<== 方法执行完成: {}.{}, 返回值: {}", className, methodName, result);
@@ -55,7 +55,7 @@ public class LogAspect {
      */
     @Around("controllerPointcut() || servicePointcut()")
     public Object aroundAdvice(ProceedingJoinPoint joinPoint) throws Throwable {
-        String methodName = joinPoint. getSignature().getName();
+        String methodName = joinPoint.getSignature().getName();
         String className = joinPoint.getTarget().getClass().getSimpleName();
 
         long startTime = System.currentTimeMillis();
