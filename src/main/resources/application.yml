@@ -5,13 +5,13 @@ spring:
   # 数据库配置
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
-    url: jdbc:mysql://localhost:3306/fruitshop? useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC&allowMultiQueries=true
+    url: jdbc:mysql://localhost:3306/fruitshop?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC&allowMultiQueries=true
     username: root
     password: 123456
-    driver-class-name:  com.mysql.cj.jdbc.Driver
+    driver-class-name: com.mysql.cj.jdbc.Driver
     druid:
       initial-size: 5
-      min-idle:  5
+      min-idle: 5
       max-active: 20
       max-wait: 60000
       time-between-eviction-runs-millis: 60000
@@ -19,7 +19,7 @@ spring:
       validation-query: SELECT 1 FROM DUAL
       test-while-idle: true
       test-on-borrow: false
-      test-on-return:   false
+      test-on-return: false
       pool-prepared-statements: true
       max-open-prepared-statements: 20
       use-global-data-source-stat: true
@@ -32,9 +32,10 @@ spring:
       ddl-auto: none
     show-sql: false
 
-  # MVC配置
+  # MVC配置 - 修复静态资源路径（核心！）
   mvc:
-    static-path-pattern: /static/**
+    # 移除错误的static-path-pattern，使用默认配置（/xxx 映射到static/xxx）
+    # static-path-pattern: /static/**  # 注释掉这行！
     throw-exception-if-no-handler-found: true
 
   # 静态资源配置
@@ -43,26 +44,19 @@ spring:
       static-locations: classpath:/static/
       add-mappings: true
 
-  # Thymeleaf配置 - 重要！
+  # Thymeleaf配置
   thymeleaf:
-    # 模板前缀路径（必须）
     prefix: classpath:/templates/
-    # 模板后缀
     suffix: .html
-    # 编码
     encoding: UTF-8
-    # 模式
     mode: HTML
-    # 禁用缓存（开发模式）
     cache: false
-    # 禁用模板位置检查警告
     check-template-location: false
-    # 启用MVC Thymeleaf视图解析器
     enabled: true
 
-  # MyBatis-Plus配置
+# MyBatis-Plus配置 - 修复mapper路径空格问题
 mybatis-plus:
-  mapper-locations: classpath:/mapper/*. xml
+  mapper-locations: classpath:/mapper/*.xml  # 移除.xml前的空格
   type-aliases-package: com.fruitshop.entity
   configuration:
     map-underscore-to-camel-case: true
@@ -71,33 +65,33 @@ mybatis-plus:
   global-config:
     db-config:
       id-type: AUTO
-      table-underline:   true
+      table-underline: true
 
-# 日志配置
+# 日志配置 - 修复空格问题
 logging:
   level:
     root: INFO
     com.fruitshop: DEBUG
-    org.springframework. web: INFO
+    org.springframework.web: INFO  # 移除web前的空格
     org.springframework.security: DEBUG
     org.springframework.thymeleaf: DEBUG
-    com.baomidou. mybatisplus: DEBUG
+    com.baomidou.mybatisplus: DEBUG  # 移除mybatisplus前的空格
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
   file:
-    name: logs/fruitshop. log
+    name: logs/fruitshop.log  # 移除.log前的空格
 
 # 服务器配置
 server:
   port: 8080
   servlet:
-    context-path: /fruitshop
+    context-path: /fruitshop  # 上下文路径，所有请求需加/fruitshop前缀
     session:
       timeout: 30m
       cookie:
         http-only: true
-        secure:   false
+        secure: false
   tomcat:
     max-threads: 200
     min-spare-threads: 10

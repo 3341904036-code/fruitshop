@@ -9,14 +9,14 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
-import org.springframework.security.core.session.SessionRegistry;
-import org.springframework.security.core.session.SessionRegistryImpl;
 
 /**
- * Spring Security配置（最终修复版）
+ * Spring Security配置（适配上下文路径+静态资源）
  */
 @Configuration
 @EnableWebSecurity
@@ -27,29 +27,24 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        // 使用自定义认证提供者
         auth.authenticationProvider(customAuthenticationProvider);
     }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        // 注意：确保AESPasswordEncoder正确实现PasswordEncoder接口的encode和matches方法
         return new AESPasswordEncoder();
     }
 
-    // 可选：仍然保留UserDetailsService用于其他用途
     @Bean
     public UserDetailsService userDetailsService() {
         return new UserDetailsServiceImpl();
     }
 
-    // 关键补充：会话注册表，让maximumSessions生效
     @Bean
     public SessionRegistry sessionRegistry() {
         return new SessionRegistryImpl();
     }
 
-    // 关键补充：监听会话事件，支持会话并发控制
     @Bean
     public HttpSessionEventPublisher httpSessionEventPublisher() {
         return new HttpSessionEventPublisher();
@@ -60,33 +55,35 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http
                 .csrf().disable()
                 .authorizeRequests()
-                // 静态资源路径匹配前端实际引用
-                .antMatchers("/resources/static/**").permitAll()
-                // 只放行登录页面，其他HTML页面需要认证
-                .antMatchers("/login.html").permitAll()
-                .antMatchers("/error").permitAll()
-                // API认证端点放行
-                .antMatchers("/api/auth/**").permitAll()
+                // ========== 核心修复：放行静态资源（适配context-path） ==========
+                .antMatchers("/css/**", "/js/**", "/img/**").permitAll()
+                // 放行登录页、错误页、认证接口
+                .antMatchers("/login.html", "/error", "/api/auth/**").permitAll()
                 // 其他请求需要认证
                 .anyRequest().authenticated()
                 .and()
 
                 .formLogin()
+                // 登录页路径（包含context-path：/fruitshop/login.html）
                 .loginPage("/login.html")
+                // 登录处理接口
                 .loginProcessingUrl("/api/auth/login")
-                // 参数名改为uId，与前端传参保持一致
+                // 前端传参名：uId和password
                 .usernameParameter("uId")
                 .passwordParameter("password")
+                // 登录成功后跳转首页（包含context-path）
                 .defaultSuccessUrl("/index.html", true)
+                // 登录失败跳转
                 .failureUrl("/login.html?error=true")
                 .permitAll()
                 .and()
 
-                // ========== 关键修复：禁用Basic认证 ==========
                 .httpBasic().disable()
 
                 .logout()
+                // 退出接口
                 .logoutUrl("/api/auth/logout")
+                // 退出成功跳转登录页（包含context-path）
                 .logoutSuccessUrl("/login.html")
                 .invalidateHttpSession(true)
                 .clearAuthentication(true)
@@ -94,7 +91,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
 
                 .sessionManagement()
-                // 关联SessionRegistry，让单会话限制生效
                 .maximumSessions(1)
                 .sessionRegistry(sessionRegistry())
                 .expiredUrl("/login.html?expired=true");

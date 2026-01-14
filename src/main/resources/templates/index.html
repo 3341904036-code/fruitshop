@@ -1,580 +1,314 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1.0">
-    <title>水果商店管理系统 - 首页</title>
-    <link rel="stylesheet" href="/fruitshop/resources/static/css/bootstrap.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>水果商城管理系统 - 首页</title>
+    <!-- 静态资源路径（自动适配context-path：/fruitshop） -->
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+    <!-- 自定义样式（优化美观度） -->
     <style>
+        /* 全局样式 */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
         body {
-            background-color: #f5f7fa;
-            font-family: 'Microsoft YaHei', Arial, sans-serif;
-            color: #333;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            font-family: "Microsoft YaHei", sans-serif;
+            background-color: #f8f9fa;
         }
+        /* 导航栏 */
         .navbar {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* 更细腻的导航栏阴影 */
-            padding: 15px 0;
-            position: sticky;
-            top: 0;
-            z-index: 999; /* 固定导航栏 */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            z-index: 1000;
         }
         .navbar-brand {
-            font-size: 22px;
-            font-weight: bold;
-            color: white !important;
-            letter-spacing: 0.5px;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #fff !important;
         }
-        .navbar-nav .nav-link { /* 修复多余空格 */
-            color: rgba(255, 255, 255, 0.8) !important;
-            margin: 0 10px;
-            transition: all 0.3s ease;
-            padding: 8px 12px;
-            border-radius: 6px; /* 导航链接圆角 */
+        .nav-link {
+            color: #fff !important;
+            transition: all 0.3s;
         }
-        .navbar-nav .nav-link:hover {
-            color: white !important;
-            background-color: rgba(255, 255, 255, 0.1); /* hover 背景 */
+        .nav-link:hover {
+            color: #ffc107 !important;
         }
-        .user-info {
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 14px;
-            margin-right: 20px;
-            padding: 8px 0;
+        /* 主要内容区 */
+        .main-content {
+            flex: 1;
+            padding: 2rem 0;
         }
-        .logout-btn { /* 修复多余空格 */
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            padding: 8px 18px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 14px;
+        .container {
+            max-width: 1200px;
         }
-        .logout-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-            color: white;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-        .container-main {
-            margin-top: 30px;
-            margin-bottom: 30px;
-            padding: 0 15px;
-        }
-        .sidebar { /* 修复多余空格 */
-            background: white;
-            border-radius: 10px;
-            padding: 0;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            height: fit-content;
-            overflow: hidden;
-        }
-        .sidebar .list-group-item { /* 修复多余空格 */
+        /* 欢迎提示框 */
+        .alert-success {
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
             border: none;
-            border-bottom: 1px solid #f0f0f0;
-            padding: 16px 20px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            color: #555;
-            font-size: 14px;
-            position: relative;
-            overflow: hidden;
+            background-color: #d1e7dd;
+            color: #0f5132;
         }
-        .sidebar .list-group-item:last-child {
-            border-bottom: none;
-        }
-        .sidebar .list-group-item:hover {
-            background-color: #f8f9fa;
-            border-left: 4px solid #667eea;
-            padding-left: 16px;
-            color: #667eea;
-            transform: translateX(2px); /* 轻微右移 */
-        }
-        .sidebar .list-group-item.active { /* 修复多余空格 */
-            background: linear-gradient(90deg, #f0f4ff 0%, #f8f9fa 100%);
-            border-left: 4px solid #667eea;
-            padding-left: 16px;
-            color: #667eea;
-            font-weight: bold;
-        }
-        /* 侧边栏item hover 装饰 */
-        .sidebar .list-group-item::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 3px;
-            height: 100%;
-            background: #667eea;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        .sidebar .list-group-item:hover::before {
-            opacity: 1;
-        }
+        /* 数据概览卡片 */
         .card {
             border: none;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            transition: all 0.4s ease;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
             overflow: hidden;
-            margin-bottom: 20px;
         }
         .card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12); /* 增强hover阴影 */
+            box-shadow: 0 8px 16px rgba(0,0,0,0.12);
         }
-        .card-title {
-            color: #333;
-            font-weight: bold;
-            font-size: 18px;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .card-title::before {
-            content: "";
-            width: 4px;
-            height: 20px;
-            background: #667eea;
-            border-radius: 2px;
+        .card-header {
+            background-color: #0d6efd;
+            color: #fff;
+            font-weight: 600;
+            border-bottom: none;
         }
         .card-body {
-            padding: 25px;
+            padding: 1.5rem;
         }
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            border-radius: 8px;
-            padding: 8px 20px;
-            transition: all 0.3s ease;
+        /* 快捷操作按钮 */
+        .btn {
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.2s;
         }
-        .btn-primary:hover {
-            background: linear-gradient(135deg, #5a6edb 0%, #6b4190 100%);
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 10px rgba(102,126,234,0.2);
+        .btn:hover {
+            transform: scale(1.02);
         }
-        .stats-card {
-            background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
-            padding: 25px 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
+        /* 页脚 */
+        .footer {
+            background-color: #212529;
+            color: #fff;
+            padding: 1.5rem 0;
+            margin-top: auto;
             text-align: center;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            transition: all 0.3s ease;
-            border: 1px solid #f0f4ff;
+            font-size: 0.9rem;
         }
-        .stats-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 16px rgba(102,126,234,0.1);
-        }
-        .stats-card-number {
-            font-size: 36px;
-            font-weight: bold;
-            color: #667eea;
-            margin-bottom: 8px;
-            transition: all 0.5s ease;
-        }
-        .stats-card:hover .stats-card-number {
-            transform: scale(1.05); /* 数字轻微放大 */
-        }
-        .stats-card-label {
-            color: #666;
-            margin-top: 8px;
-            font-size: 14px;
-            letter-spacing: 0.3px;
-        }
-        .table {
-            background: white;
-            border-radius: 10px;
-            overflow: hidden; /* 让圆角生效 */
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        }
-        .table thead {
-            background: linear-gradient(90deg, #f8f9fa 0%, #f0f4ff 100%);
-        }
-        .table th {
-            border: none;
-            padding: 15px;
-            color: #555;
+        /* 时间显示 */
+        #currentTime {
             font-weight: 600;
+            color: #0d6efd;
         }
-        .table td {
-            border-color: #f0f0f0;
-            padding: 15px;
-        }
-        .content-section {
-            display: none;
-            animation: sectionFade 0.4s ease-in-out; /* 内容切换动画 */
-        }
-        @keyframes sectionFade {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .content-section.active {
-            display: block;
-        }
-        h2 {
-            color: #333;
-            font-weight: 600;
-            margin-bottom: 30px;
-            position: relative;
-            padding-bottom: 10px;
-        }
-        h2::after {
-            content: "";
-            position: absolute;
-            left: 0;
-            bottom: 0;
-            width: 60px;
-            height: 3px;
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-            border-radius: 3px;
-        }
-        /* 移动端适配 */
+        /* 响应式适配 */
         @media (max-width: 768px) {
-            .sidebar {
-                margin-bottom: 20px;
-            }
-            .stats-card-number {
-                font-size: 28px;
+            .main-content {
+                padding: 1rem 0;
             }
             .card-body {
-                padding: 20px 15px;
+                padding: 1rem;
             }
-            .navbar-brand {
-                font-size: 18px;
-            }
-            .user-info {
-                margin-right: 10px;
-                font-size: 13px;
-            }
-            .logout-btn {
-                padding: 6px 12px;
-                font-size: 13px;
+            .btn {
+                margin-bottom: 0.5rem;
             }
         }
     </style>
 </head>
 <body>
 <!-- 导航栏 -->
-<nav class="navbar navbar-expand-lg navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="javascript:void(0)">🍎 水果商店管理系统</a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav">
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+        <a class="navbar-brand" th:href="@{/index.html}">🍎 水果商城管理系统</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ml-auto">
+            <ul class="navbar-nav me-auto">
                 <li class="nav-item">
-                    <div class="user-info" id="userInfo">欢迎登录</div>
+                    <a class="nav-link active" aria-current="page" th:href="@{/index.html}">首页</a>
                 </li>
                 <li class="nav-item">
-                    <button class="logout-btn" onclick="logout()">注销</button>
+                    <a class="nav-link" th:href="@{/customer/list}">顾客管理</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/fruit/list}">水果管理</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/order/list}">订单管理</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/supplier/list}">供应商管理</a>
+                </li>
+            </ul>
+            <ul class="navbar-nav">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <!-- 显示「角色名+uId」，空则显示“游客” -->
+                        <span th:text="${session.loginUser?.showName ?: '游客'}">顾客10099</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" th:href="@{/api/auth/logout}">退出登录</a></li>
+                    </ul>
                 </li>
             </ul>
         </div>
     </div>
 </nav>
 
-<!-- 主容器 -->
-<div class="container-fluid container-main">
-    <div class="row">
-        <!-- 侧边栏 -->
-        <div class="col-md-2">
-            <div class="sidebar">
-                <div class="list-group">
-                    <div class="list-group-item active" onclick="showSection('dashboard')">📊 仪表板</div>
-                    <div class="list-group-item role-dependent" data-role="admin,salor,cusm" onclick="showSection('customers')">👥 顾客管理</div>
-                    <div class="list-group-item role-dependent" data-role="admin,salor" onclick="showSection('fruits')">🍓 水果管理</div>
-                    <div class="list-group-item role-dependent" data-role="admin,salor,cusm" onclick="showSection('orders')">📦 订单管理</div>
-                    <div class="list-group-item role-dependent" data-role="admin,supp" onclick="showSection('suppliers')">🏭 供应商管理</div>
-                    <div class="list-group-item role-dependent" data-role="admin,salor" onclick="showSection('vip')">⭐ VIP管理</div>
+<!-- 主要内容区 -->
+<div class="main-content container">
+    <!-- 欢迎信息 -->
+    <div class="alert alert-success mb-4" role="alert">
+        <h4 class="alert-heading">欢迎回来，<span th:text="${session.loginUser?.showName ?: '游客'}">顾客10099</span>！</h4>
+        <p>当前系统时间：<span id="currentTime"></span></p>
+        <hr>
+        <p class="mb-0">请选择顶部菜单进行业务操作，如有问题请联系系统管理员。</p>
+    </div>
+
+    <!-- 数据概览卡片 -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-3 col-sm-6">
+            <div class="card text-center">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">水果总数</h5>
+                </div>
+                <div class="card-body">
+                    <h2 class="card-text text-info mb-3" id="fruitCount">--</h2>
+                    <a href="#" th:href="@{/fruit/list}" class="btn btn-info btn-sm">查看详情</a>
                 </div>
             </div>
         </div>
-
-        <!-- 主内容区 -->
-        <div class="col-md-10">
-            <!-- 仪表板 -->
-            <div id="dashboard" class="content-section active">
-                <h2>📊 仪表板</h2>
-
-                <div class="row">
-                    <div class="col-md-3">
-                        <div class="stats-card">
-                            <div class="stats-card-number" id="customerCount">0</div>
-                            <div class="stats-card-label">总顾客数</div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="stats-card">
-                            <div class="stats-card-number" id="fruitCount">0</div>
-                            <div class="stats-card-label">水果种类</div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="stats-card">
-                            <div class="stats-card-number" id="orderCount">0</div>
-                            <div class="stats-card-label">总订单数</div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="stats-card">
-                            <div class="stats-card-number" id="vipCount">0</div>
-                            <div class="stats-card-label">VIP顾客</div>
-                        </div>
-                    </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="card text-center">
+                <div class="card-header bg-warning text-white">
+                    <h5 class="mb-0">今日订单</h5>
                 </div>
-
-                <div class="row" style="margin-top: 30px;">
-                    <div class="col-md-12">
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">📈 系统概览</h5>
-                                <p style="color: #666; line-height: 1.8; margin-top: 15px; font-size: 14px;">
-                                    欢迎使用水果商店管理系统！这是一个功能完整的企业级管理系统，提供了：<br>
-                                    • 顾客信息管理（新增、编辑、查询、VIP标记）<br>
-                                    • 水果库存管理（库存预警、价格调整、分类管理）<br>
-                                    • 订单处理系统（下单、支付、发货、退款）<br>
-                                    • 供应商管理（资质审核、合作状态、供货记录）<br>
-                                    • VIP客户折扣系统（等级设置、折扣规则、消费统计）<br>
-                                    <br>
-                                    请使用左侧菜单选择要进行的操作，所有操作数据将实时同步至服务器。
-                                </p>
-                            </div>
-                        </div>
-                    </div>
+                <div class="card-body">
+                    <h2 class="card-text text-warning mb-3" id="todayOrderCount">--</h2>
+                    <a href="#" th:href="@{/order/list}" class="btn btn-warning btn-sm">查看详情</a>
                 </div>
             </div>
-
-            <!-- 其他内容区 -->
-            <div id="customers" class="content-section">
-                <h2>👥 顾客管理</h2>
-                <div class="card">
-                    <div class="card-body">
-                        <p style="color: #666; font-size: 14px; line-height: 1.6;">顾客管理功能准备中...<br>
-                            即将支持：顾客信息查询、新增顾客、编辑顾客资料、标记VIP顾客、导出顾客列表等功能。</p>
-                    </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="card text-center">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">顾客总数</h5>
+                </div>
+                <div class="card-body">
+                    <h2 class="card-text text-success mb-3" id="customerCount">--</h2>
+                    <a href="#" th:href="@{/customer/list}" class="btn btn-success btn-sm">查看详情</a>
                 </div>
             </div>
-
-            <div id="fruits" class="content-section">
-                <h2>🍓 水果管理</h2>
-                <div class="card">
-                    <div class="card-body">
-                        <p style="color: #666; font-size: 14px; line-height: 1.6;">水果管理功能准备中...<br>
-                            即将支持：水果信息录入、库存管理、价格调整、分类管理、库存预警提醒等功能。</p>
-                    </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="card text-center">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">今日销售额</h5>
+                </div>
+                <div class="card-body">
+                    <h2 class="card-text text-danger mb-3" id="todaySales">¥--</h2>
+                    <a href="#" th:href="@{/order/list}" class="btn btn-danger btn-sm">查看详情</a>
                 </div>
             </div>
+        </div>
+    </div>
 
-            <div id="orders" class="content-section">
-                <h2>📦 订单管理</h2>
-                <div class="card">
-                    <div class="card-body">
-                        <p style="color: #666; font-size: 14px; line-height: 1.6;">订单管理功能准备中...<br>
-                            即将支持：订单查询、订单状态更新、发货管理、退款处理、订单统计分析等功能。</p>
-                    </div>
+    <!-- 快捷操作区 -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">快捷操作</h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-2 col-sm-4">
+                    <a href="#" th:href="@{/fruit/add}" class="btn btn-primary w-100">
+                        <i class="bi bi-plus-circle"></i> 添加水果
+                    </a>
                 </div>
-            </div>
-
-            <div id="suppliers" class="content-section">
-                <h2>🏭 供应商管理</h2>
-                <div class="card">
-                    <div class="card-body">
-                        <p style="color: #666; font-size: 14px; line-height: 1.6;">供应商管理功能准备中...<br>
-                            即将支持：供应商信息录入、资质审核、合作状态管理、供货记录查询等功能。</p>
-                    </div>
+                <div class="col-md-2 col-sm-4">
+                    <a href="#" th:href="@{/order/add}" class="btn btn-primary w-100">
+                        <i class="bi bi-cart-plus"></i> 新增订单
+                    </a>
                 </div>
-            </div>
-
-            <div id="vip" class="content-section">
-                <h2>⭐ VIP管理</h2>
-                <div class="card">
-                    <div class="card-body">
-                        <p style="color: #666; font-size: 14px; line-height: 1.6;">VIP管理功能准备中...<br>
-                            即将支持：VIP等级设置、折扣规则配置、VIP消费统计、专属权益管理等功能。</p>
-                    </div>
+                <div class="col-md-2 col-sm-4">
+                    <a href="#" th:href="@{/customer/add}" class="btn btn-primary w-100">
+                        <i class="bi bi-person-plus"></i> 添加顾客
+                    </a>
+                </div>
+                <div class="col-md-2 col-sm-4">
+                    <a href="#" th:href="@{/supplier/add}" class="btn btn-primary w-100">
+                        <i class="bi bi-building-plus"></i> 添加供应商
+                    </a>
+                </div>
+                <div class="col-md-2 col-sm-4">
+                    <button class="btn btn-warning w-100" onclick="refreshData()">
+                        <i class="bi bi-arrow-clockwise"></i> 刷新数据
+                    </button>
+                </div>
+                <div class="col-md-2 col-sm-4">
+                    <button class="btn btn-info w-100" onclick="exportData()">
+                        <i class="bi bi-download"></i> 导出报表
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<script src="/fruitshop/resources/static/js/jquery-3.6.4.min.js"></script>
-<script src="/fruitshop/resources/static/js/bootstrap.bundle.min.js"></script>
-<script src="/fruitshop/resources/static/js/axios.min.js"></script>
+<!-- 页脚 -->
+<div class="footer">
+    <p class="mb-0">© 2026 水果商城管理系统 - 版权所有</p>
+</div>
 
+<!-- 引入JS资源（自动适配context-path） -->
+<script th:src="@{/js/jquery-3.6.4.min.js}"></script>
+<script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+<script th:src="@{/js/axios.min.js}"></script>
+
+<!-- 自定义JS逻辑 -->
 <script>
-    const API_BASE = '/fruitshop/api';
+    // 1. 实时显示系统时间
+    function updateTime() {
+        const now = new Date();
+        const timeStr = now.toLocaleString('zh-CN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+        document.getElementById('currentTime').textContent = timeStr;
+    }
+    setInterval(updateTime, 1000);
+    updateTime();
 
-    // 页面初始化
-    document.addEventListener('DOMContentLoaded', function() {
-        loadCurrentUser();
-        loadDashboardData();
-    });
-
-    // 加载当前用户信息
-    function loadCurrentUser() {
-        axios.get(API_BASE + '/auth/currentUser')
-            .then(response => {
-                if (response.data.code === 200) {
-                    const user = response.data.data;
-                    document.getElementById('userInfo').textContent =
-                        `欢迎，${user.remark || user.roleName} (角色: ${getRoleDisplayName(user.roleName)})`;
-
-                    // 根据用户角色过滤菜单
-                    filterMenuByRole(user.roleName);
+    // 2. 刷新数据（模拟请求后端统计接口）
+    function refreshData() {
+        // 实际项目中替换为真实接口：/fruitshop/dashboard/statistics
+        axios.get('/fruitshop/dashboard/statistics')
+            .then(res => {
+                if (res.data.code === 200) {
+                    const data = res.data.data;
+                    document.getElementById('fruitCount').textContent = data.fruitCount || 0;
+                    document.getElementById('todayOrderCount').textContent = data.todayOrderCount || 0;
+                    document.getElementById('customerCount').textContent = data.customerCount || 0;
+                    document.getElementById('todaySales').textContent = '¥' + (data.todaySales || 0).toFixed(2);
+                    alert('数据刷新成功！');
                 }
             })
-            .catch(error => {
-                console.log('用户未登录，重定向到登录页面');
-                window.location.href = '/fruitshop/login.html'; // 修复空格
+            .catch(() => {
+                alert('数据刷新失败，请稍后重试！');
             });
     }
 
-    // 根据角色名获取显示名称
-    function getRoleDisplayName(roleName) {
-        switch(roleName) {
-            case 'Admin':
-                return '管理员';
-            case 'Cusm':
-                return '顾客';
-            case 'Supp':
-                return '供应商';
-            case 'Salor':
-                return '销售员';
-            default:
-                return roleName;
-        }
+    // 3. 导出报表（占位逻辑）
+    function exportData() {
+        window.location.href = '/fruitshop/dashboard/export';
     }
 
-    // 根据用户角色过滤菜单
-    function filterMenuByRole(userRoleName) {
-        // 将角色名转换为小写用于匹配
-        let roleKey = '';
-        switch(userRoleName) {
-            case 'Admin':
-                roleKey = 'admin';
-                break;
-            case 'Cusm':
-                roleKey = 'cusm';
-                break;
-            case 'Supp':
-                roleKey = 'supp';
-                break;
-            case 'Salor':
-                roleKey = 'salor';
-                break;
-            default:
-                roleKey = 'cusm'; // 默认为顾客角色
-        }
-
-        // 隐藏没有权限的菜单项
-        const menuItems = document.querySelectorAll('.role-dependent');
-        menuItems.forEach(item => {
-            const allowedRoles = item.getAttribute('data-role').split(',');
-            if (!allowedRoles.includes(roleKey)) {
-                item.classList.add('hidden-by-role');
-            }
-        });
-    }
-
-    // 加载仪表板数据
-    function loadDashboardData() {
-        // 顾客数量
-        axios.get(API_BASE + '/customer/list/all') // 修复空格
-            .then(response => {
-                if (response.data.code === 200) {
-                    animateNumber('customerCount', 0, response.data.data.length, 1000);
-                }
-            })
-            .catch(error => console.error('加载顾客数据失败:', error));
-
-        // 水果数量
-        axios.get(API_BASE + '/fruit/list/all')
-            .then(response => {
-                if (response.data.code === 200) {
-                    animateNumber('fruitCount', 0, response.data.data.length, 1000);
-                }
-            })
-            .catch(error => console.error('加载水果数据失败:', error));
-
-        // 订单数量
-        axios.get(API_BASE + '/order/list/all') // 修复空格
-            .then(response => {
-                if (response.data.code === 200) {
-                    animateNumber('orderCount', 0, response.data.data.length, 1000);
-                }
-            })
-            .catch(error => console.error('加载订单数据失败:', error));
-
-        // VIP顾客数量
-        axios.get(API_BASE + '/customer/list/vip') // 修复空格
-            .then(response => {
-                if (response.data.code === 200) {
-                    animateNumber('vipCount', 0, response.data.data.length, 1000);
-                }
-            })
-            .catch(error => console.error('加载VIP数据失败:', error));
-    }
-
-    // 数字动画效果
-    function animateNumber(id, start, end, duration) {
-        const element = document.getElementById(id);
-        const range = end - start;
-        const stepTime = Math.abs(Math.floor(duration / range));
-        let current = start;
-        const timer = setInterval(() => {
-            current += 1;
-            element.textContent = current;
-            if (current === end) {
-                clearInterval(timer);
-            }
-        }, stepTime);
-    }
-
-    // 显示内容区
-    function showSection(sectionId) {
-        // 隐藏所有内容区
-        document.querySelectorAll('.content-section').forEach(el => {
-            el.classList.remove('active'); // 修复空格
-        });
-
-        // 移除所有菜单项的active类
-        document.querySelectorAll('.sidebar .list-group-item').forEach(el => {
-            el.classList.remove('active'); // 修复空格
-        });
-
-        // 显示选中的内容区
-        document.getElementById(sectionId).classList.add('active');
-
-        // 给点击的菜单项添加active类
-        event.target.classList.add('active');
-    }
-
-    // 注销
-    function logout() {
-        if (confirm('确定要注销吗？')) {
-            axios.post(API_BASE + '/auth/logout') // 修复空格
-                .then(response => {
-                    window.location.href = '/fruitshop/login.html';
-                })
-                .catch(error => {
-                    window.location.href = '/fruitshop/login.html';
-                });
-        }
-    }
+    // 页面加载时初始化数据
+    $(document).ready(function() {
+        refreshData();
+    });
 </script>
 </body>
 </html>
