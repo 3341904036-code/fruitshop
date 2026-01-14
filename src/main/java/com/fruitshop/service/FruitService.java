@@ -1,6 +1,8 @@
 package com.fruitshop.service;
 
-import com. fruitshop.entity. Fruit;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.fruitshop.entity.Fruit;
+
 import java.util.List;
 
 /**
@@ -29,7 +31,12 @@ public interface FruitService {
     Fruit getFruitById(String fId);
 
     /**
-     * 查询所有水果
+     * 查询所有水果（分页）
+     */
+    IPage<Fruit> getAllFruits(Integer page, Integer pageSize);
+
+    /**
+     * 查询所有水果（不分页，兼容旧逻辑）
      */
     List<Fruit> getAllFruits();
 
@@ -49,9 +56,12 @@ public interface FruitService {
     List<Fruit> getLowStockFruits(Integer minQty);
 
     /**
-     * 更新库存
+     * 更新库存（支持增加/减少）
      */
     boolean updateQuantity(String fId, Integer qty);
 
+    /**
+     * 统计水果总数
+     */
     int count();
 }

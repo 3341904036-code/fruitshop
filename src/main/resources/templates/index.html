@@ -211,39 +211,29 @@
         </div>
     </div>
 
-    <!-- 快捷操作区 -->
+    <!-- 快捷操作区（已移除添加顾客、添加供应商按钮） -->
     <div class="card mb-4">
         <div class="card-header">
             <h5 class="mb-0">快捷操作</h5>
         </div>
         <div class="card-body">
             <div class="row g-3">
-                <div class="col-md-2 col-sm-4">
+                <div class="col-md-3 col-sm-6">
                     <a href="#" th:href="@{/fruit/add}" class="btn btn-primary w-100">
                         <i class="bi bi-plus-circle"></i> 添加水果
                     </a>
                 </div>
-                <div class="col-md-2 col-sm-4">
+                <div class="col-md-3 col-sm-6">
                     <a href="#" th:href="@{/order/add}" class="btn btn-primary w-100">
                         <i class="bi bi-cart-plus"></i> 新增订单
                     </a>
                 </div>
-                <div class="col-md-2 col-sm-4">
-                    <a href="#" th:href="@{/customer/add}" class="btn btn-primary w-100">
-                        <i class="bi bi-person-plus"></i> 添加顾客
-                    </a>
-                </div>
-                <div class="col-md-2 col-sm-4">
-                    <a href="#" th:href="@{/supplier/add}" class="btn btn-primary w-100">
-                        <i class="bi bi-building-plus"></i> 添加供应商
-                    </a>
-                </div>
-                <div class="col-md-2 col-sm-4">
+                <div class="col-md-3 col-sm-6">
                     <button class="btn btn-warning w-100" onclick="refreshData()">
                         <i class="bi bi-arrow-clockwise"></i> 刷新数据
                     </button>
                 </div>
-                <div class="col-md-2 col-sm-4">
+                <div class="col-md-3 col-sm-6">
                     <button class="btn btn-info w-100" onclick="exportData()">
                         <i class="bi bi-download"></i> 导出报表
                     </button>

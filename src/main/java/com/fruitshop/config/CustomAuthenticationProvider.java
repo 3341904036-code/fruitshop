@@ -14,11 +14,15 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.Collection;
 
 /**
  * 自定义认证提供程序，用于处理AES加密密码的验证（修复版）
+ * 新增：认证成功后将User存入HttpSession，解决页面显示"游客"问题
  */
 @Component
 public class CustomAuthenticationProvider implements AuthenticationProvider {
@@ -83,6 +87,21 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
         if (authorities == null || authorities.isEmpty()) {
             log.warn("用户无权限配置 - uId: {}, 分配默认空权限", uId);
             authorities = AuthorityUtils.NO_AUTHORITIES;
+        }
+
+        // ========== 新增逻辑：认证成功后将User存入HttpSession ==========
+        try {
+            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            if (attributes != null) {
+                HttpServletRequest request = attributes.getRequest();
+                // 将用户信息存入session，key为"loginUser"，匹配页面${session.loginUser}的取值
+                request.getSession().setAttribute("loginUser", user);
+                log.info("用户信息已存入Session - uId: {}, sessionId: {}", uId, request.getSession().getId());
+            } else {
+                log.warn("无法获取RequestAttributes，用户信息未存入Session - uId: {}", uId);
+            }
+        } catch (Exception e) {
+            log.error("存入用户信息到Session失败 - uId: {}", uId, e);
         }
 
         // 6. 认证成功，返回令牌（优化：密码存null更安全，避免敏感信息存储）

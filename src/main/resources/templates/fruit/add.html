@@ -59,6 +59,11 @@
       border-radius: 6px;
       padding: 0.75rem 1rem;
     }
+    .form-label.required::after {
+      content: '*';
+      color: #dc3545;
+      margin-left: 4px;
+    }
     .btn {
       border-radius: 6px;
       font-weight: 500;
@@ -133,29 +138,38 @@
     <div class="card-body">
       <form id="fruitForm">
         <div class="row g-3">
+          <!-- 新增：水果ID输入框（数据库f_id必填，无默认值） -->
           <div class="col-md-6">
-            <label for="fName" class="form-label">水果名称 *</label>
-            <input type="text" class="form-control" id="fName" name="fName" required>
+            <label for="fid" class="form-label required">水果ID *</label>
+            <input type="text" class="form-control" id="fid" name="fid" placeholder="例如：d1、z3" required>
+            <div class="form-text">水果唯一标识，不可重复（如a1、b2、c0）</div>
+          </div>
+          <!-- 修改：字段名保持和后端一致，标注必填 -->
+          <div class="col-md-6">
+            <label for="fname" class="form-label required">水果名称 *</label>
+            <input type="text" class="form-control" id="fname" name="fname" placeholder="例如：apple、香蕉" required>
           </div>
           <div class="col-md-6">
-            <label for="price" class="form-label">价格 *</label>
-            <input type="number" class="form-control" id="price" name="price" step="0.01" min="0" required>
+            <label for="fprice" class="form-label required">价格 *</label>
+            <input type="number" class="form-control" id="fprice" name="fprice" step="0.01" min="0" placeholder="例如：5.2、10.5" required>
           </div>
           <div class="col-md-6">
-            <label for="qty" class="form-label">库存 *</label>
-            <input type="number" class="form-control" id="qty" name="qty" min="0" value="0" required>
+            <label for="quantity" class="form-label required">库存 *</label>
+            <input type="number" class="form-control" id="quantity" name="quantity" min="0" value="1000" required>
           </div>
           <div class="col-md-6">
-            <label for="sId" class="form-label">供应商ID *</label>
-            <input type="number" class="form-control" id="sId" name="sId" min="1" required>
+            <label for="sid" class="form-label required">供应商ID *</label>
+            <input type="number" class="form-control" id="sid" name="sid" min="1" placeholder="例如：101、102" required>
+            <div class="form-text">请输入已存在的供应商ID（100-107）</div>
           </div>
-          <div class="col-md-12">
+          <!-- 非必填字段：后端若未接收可保留，不影响核心提交 -->
+          <div class="col-md-6">
             <label for="description" class="form-label">描述</label>
-            <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+            <textarea class="form-control" id="description" name="description" rows="1" placeholder="可选：水果描述信息"></textarea>
           </div>
           <div class="col-md-12">
             <label for="remark" class="form-label">备注</label>
-            <input type="text" class="form-control" id="remark" name="remark">
+            <input type="text" class="form-control" id="remark" name="remark" placeholder="可选：其他备注信息">
           </div>
         </div>
 
@@ -178,68 +192,80 @@
 <script th:src="@{/js/bootstrap.bundle.min.js}"></script>
 <script th:src="@{/js/axios.min.js}"></script>
 
-<!-- 自定义JS逻辑 -->
+<!-- 自定义JS逻辑（核心修改：字段名完全匹配后端小写） -->
 <script>
+  // 定义上下文路径（和列表页保持一致）
+  const contextPath = '/fruitshop';
+
   // 表单提交事件
   $('#fruitForm').on('submit', function(e) {
     e.preventDefault();
     saveFruit();
   });
 
-  // 保存水果
+  // 保存水果（核心修改：传参字段名匹配后端小写）
   function saveFruit() {
+    // 1. 获取表单值，字段名完全匹配后端（fid/fname/fprice/sid/quantity）
     const fruitData = {
-      fName: $('#fName').val().trim(),
-      price: parseFloat($('#price').val()),
-      qty: parseInt($('#qty').val()),
-      sId: parseInt($('#sId').val()),
-      description: $('#description').val().trim(),
-      remark: $('#remark').val().trim()
+      fid: $('#fid').val().trim(),          // 对应数据库f_id（必填）
+      fname: $('#fname').val().trim(),      // 对应数据库f_name（必填）
+      fprice: parseFloat($('#fprice').val()), // 对应数据库f_price（必填）
+      sid: parseInt($('#sid').val()),       // 对应数据库s_id（必填）
+      quantity: parseInt($('#quantity').val()), // 对应数据库quantity（必填）
+      description: $('#description').val().trim(), // 非必填
+      remark: $('#remark').val().trim()            // 非必填
     };
 
-    // 前端验证
-    if (!fruitData.fName) {
+    // 2. 前端严格验证（确保必填字段有值且格式正确）
+    if (!fruitData.fid) {
+      alert('请输入水果ID（如a1、b2）');
+      $('#fid').focus();
+      return;
+    }
+    if (!fruitData.fname) {
       alert('请输入水果名称');
+      $('#fname').focus();
+      return;
+    }
+    if (isNaN(fruitData.fprice) || fruitData.fprice < 0) {
+      alert('请输入有效的非负价格（如5.2、10.0）');
+      $('#fprice').focus();
+      return;
+    }
+    if (isNaN(fruitData.quantity) || fruitData.quantity < 0) {
+      alert('请输入有效的非负库存数量');
+      $('#quantity').focus();
+      return;
+    }
+    if (isNaN(fruitData.sid) || fruitData.sid <= 0) {
+      alert('请输入有效的供应商ID（100-107）');
+      $('#sid').focus();
       return;
     }
 
-    if (isNaN(fruitData.price) || fruitData.price < 0) {
-      alert('请输入有效的价格');
-      return;
-    }
-
-    if (isNaN(fruitData.qty) || fruitData.qty < 0) {
-      alert('请输入有效的库存数量');
-      return;
-    }
-
-    if (isNaN(fruitData.sId) || fruitData.sId <= 0) {
-      alert('请输入有效的供应商ID');
-      return;
-    }
-
-    // 发送请求
-    axios.post('/fruitshop/api/fruit/add', fruitData)
+    // 3. 发送请求（URL和列表页保持一致，参数名匹配后端）
+    axios.post(`${contextPath}/api/fruit/add`, fruitData)
             .then(res => {
-              if (res.data.code === 200) {
+              if (res.data && res.data.code === 200) {
                 alert('水果添加成功！');
-                // 重置表单
+                // 重置表单，方便继续添加
                 $('#fruitForm')[0].reset();
-                // 可选择性地跳转到列表页
-                // window.location.href = '/fruitshop/fruit/list';
+                // 可选：添加成功后跳回列表页
+                // window.location.href = `${contextPath}/fruit/list`;
               } else {
-                alert('添加失败: ' + res.data.message);
+                alert('添加失败: ' + (res.data?.message || '未知错误'));
               }
             })
             .catch(err => {
               console.error('添加水果失败:', err);
-              alert('添加水果失败');
+              console.error('后端响应:', err.response); // 调试用：打印后端具体错误
+              alert(`添加失败：${err.message || '请检查字段是否填写正确，或水果ID已存在'}`);
             });
   }
 
   // 返回列表
   function goBack() {
-    window.location.href = '/fruitshop/fruit/list';
+    window.location.href = `${contextPath}/fruit/list`;
   }
 </script>
 </body>

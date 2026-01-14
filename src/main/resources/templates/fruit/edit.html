@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>编辑水果 - 水果商城管理系统</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            min-height: 100vh;
+            font-family: "Microsoft YaHei", sans-serif;
+            background-color: #f8f9fa;
+        }
+        .navbar {
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+        .navbar-brand {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #fff !important;
+        }
+        .nav-link {
+            color: #fff !important;
+            transition: all 0.3s;
+        }
+        .nav-link:hover {
+            color: #ffc107 !important;
+        }
+        .main-content {
+            padding: 2rem 0;
+        }
+        .container {
+            max-width: 800px;
+        }
+        .card {
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.12);
+        }
+        .card-header {
+            background-color: #007bff;
+            color: #fff;
+            font-weight: 600;
+            border-bottom: none;
+        }
+        .form-control {
+            border-radius: 6px;
+            padding: 0.75rem 1rem;
+        }
+        .form-label.required::after {
+            content: '*';
+            color: #dc3545;
+            margin-left: 4px;
+        }
+        .btn {
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .btn:hover {
+            transform: scale(1.02);
+        }
+        .footer {
+            background-color: #212529;
+            color: #fff;
+            padding: 1.5rem 0;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        .alert {
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 1rem 0;
+            }
+            .card-body {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<!-- 导航栏 -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+        <a class="navbar-brand" th:href="@{/index.html}">🍎 水果商城管理系统</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/index.html}">首页</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/customer/list}">顾客管理</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" aria-current="page" th:href="@{/fruit/list}">水果管理</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/order/list}">订单管理</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/supplier/list}">供应商管理</a>
+                </li>
+            </ul>
+            <ul class="navbar-nav">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <span th:text="${session.loginUser?.showName ?: '游客'}">顾客10099</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" th:href="@{/api/auth/logout}">退出登录</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- 主要内容区 -->
+<div class="main-content container">
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">编辑水果信息</h5>
+        </div>
+        <div class="card-body">
+            <!-- 加载失败提示 -->
+            <div id="loadError" class="alert alert-danger d-none" role="alert">
+                加载水果数据失败，请返回列表重试！
+            </div>
+
+            <!-- 表单区域 -->
+            <form id="fruitEditForm" class="d-none">
+                <div class="row g-3">
+                    <!-- 水果ID：只读（不可修改） -->
+                    <div class="col-md-6">
+                        <label for="fid" class="form-label required">水果ID</label>
+                        <input type="text" class="form-control" id="fid" name="fid" readonly>
+                        <div class="form-text">水果唯一标识，不可修改</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="fname" class="form-label required">水果名称 *</label>
+                        <input type="text" class="form-control" id="fname" name="fname" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="fprice" class="form-label required">价格 *</label>
+                        <input type="number" class="form-control" id="fprice" name="fprice" step="0.01" min="0" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="quantity" class="form-label required">库存 *</label>
+                        <input type="number" class="form-control" id="quantity" name="quantity" min="0" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="sid" class="form-label required">供应商ID *</label>
+                        <input type="number" class="form-control" id="sid" name="sid" min="1" required>
+                        <div class="form-text">请输入已存在的供应商ID（100-107）</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="description" class="form-label">描述</label>
+                        <textarea class="form-control" id="description" name="description" rows="1" placeholder="可选：水果描述信息"></textarea>
+                    </div>
+                    <div class="col-md-12">
+                        <label for="remark" class="form-label">备注</label>
+                        <input type="text" class="form-control" id="remark" name="remark" placeholder="可选：其他备注信息">
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary me-2">保存修改</button>
+                    <button type="button" class="btn btn-secondary" onclick="goBack()">返回列表</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 页脚 -->
+<div class="footer">
+    <p class="mb-0">© 2026 水果商城管理系统 - 版权所有</p>
+</div>
+
+<!-- 引入JS资源 -->
+<script th:src="@{/js/jquery-3.6.4.min.js}"></script>
+<script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+<script th:src="@{/js/axios.min.js}"></script>
+
+<script>
+    // 上下文路径（与列表页/添加页保持一致）
+    const contextPath = '/fruitshop';
+
+    // 从URL解析水果ID（兼容不同路径格式）
+    const pathParts = window.location.pathname.split('/');
+    const fid = pathParts[pathParts.length - 1] || '';
+
+    // 页面初始化：加载水果数据
+    $(document).ready(function() {
+        // 校验ID是否有效
+        if (!fid) {
+            $('#loadError').text('无效的水果ID，请检查请求路径').removeClass('d-none');
+            return;
+        }
+        loadFruitData();
+    });
+
+    /**
+     * 加载要编辑的水果数据（优先详情接口，降级列表接口）
+     */
+    function loadFruitData() {
+        // 显示加载状态（可选，提升体验）
+        $('#loadError').text('正在加载数据...').removeClass('d-none').removeClass('alert-danger').addClass('alert-info');
+
+        // 优先调用详情接口
+        axios.get(`${contextPath}/api/fruit/detail/${fid}`)
+            .then(res => {
+                if (res.data && res.data.code === 200 && res.data.data) {
+                    renderFruitForm(res.data.data);
+                    $('#loadError').addClass('d-none');
+                } else {
+                    throw new Error(res.data?.message || '详情接口返回无有效数据');
+                }
+            })
+            .catch(err => {
+                console.error('详情接口调用失败，尝试降级方案:', err);
+                fallbackLoadFruit();
+            });
+    }
+
+    /**
+     * 降级方案：从全量列表中筛选当前水果数据
+     */
+    function fallbackLoadFruit() {
+        axios.get(`${contextPath}/api/fruit/list/all`)
+            .then(res => {
+                if (res.data && res.data.code === 200 && Array.isArray(res.data.data)) {
+                    const fruits = res.data.data;
+                    const currentFruit = fruits.find(item => (item.fid === fid) || (item.fId === fid));
+
+                    if (currentFruit) {
+                        renderFruitForm(currentFruit);
+                        $('#loadError').addClass('d-none');
+                    } else {
+                        $('#loadError').text('未找到该水果数据，请返回列表重试').removeClass('d-none').removeClass('alert-info').addClass('alert-danger');
+                    }
+                } else {
+                    throw new Error('列表接口返回异常');
+                }
+            })
+            .catch(err => {
+                console.error('降级方案加载失败:', err);
+                $('#loadError').text('加载水果数据失败，请返回列表重试').removeClass('d-none').removeClass('alert-info').addClass('alert-danger');
+            });
+    }
+
+    /**
+     * 渲染表单数据（兼容后端驼峰/小写字段）
+     */
+    function renderFruitForm(fruit) {
+        // 兼容字段命名：优先小写，其次驼峰
+        $('#fid').val(fruit.fid || fruit.fId || '');
+        $('#fname').val(fruit.fname || fruit.fName || '');
+        $('#fprice').val(fruit.fprice || fruit.fPrice || 0);
+        $('#quantity').val(fruit.quantity || 0);
+        $('#sid').val(fruit.sid || fruit.sId || '');
+        $('#description').val(fruit.description || '');
+        $('#remark').val(fruit.remark || '');
+
+        // 显示表单
+        $('#fruitEditForm').removeClass('d-none');
+    }
+
+    /**
+     * 表单提交：更新水果信息
+     */
+    $('#fruitEditForm').on('submit', function(e) {
+        e.preventDefault();
+        updateFruit();
+    });
+
+    /**
+     * 提交更新请求
+     */
+    function updateFruit() {
+        // 收集表单数据（兼容后端字段命名）
+        const fruitData = {
+            fId: $('#fid').val().trim(),       // 兼容后端驼峰字段
+            fid: $('#fid').val().trim(),       // 兼容后端小写字段
+            fName: $('#fname').val().trim(),   // 驼峰
+            fname: $('#fname').val().trim(),   // 小写
+            fPrice: parseFloat($('#fprice').val()), // 驼峰
+            fprice: parseFloat($('#fprice').val()), // 小写
+            sId: parseInt($('#sid').val()),    // 驼峰
+            sid: parseInt($('#sid').val()),    // 小写
+            quantity: parseInt($('#quantity').val()),
+            description: $('#description').val().trim(),
+            remark: $('#remark').val().trim()
+        };
+
+        // 前端严格校验
+        if (!fruitData.fname) {
+            alert('请输入水果名称');
+            $('#fname').focus();
+            return;
+        }
+        if (isNaN(fruitData.fprice) || fruitData.fprice < 0) {
+            alert('请输入有效的非负价格（如：0.01、10.5）');
+            $('#fprice').focus();
+            return;
+        }
+        if (isNaN(fruitData.quantity) || fruitData.quantity < 0) {
+            alert('请输入有效的非负库存数量');
+            $('#quantity').focus();
+            return;
+        }
+        if (isNaN(fruitData.sid) || fruitData.sid <= 0) {
+            alert('请输入有效的供应商ID（100-107）');
+            $('#sid').focus();
+            return;
+        }
+
+        // 提交更新请求
+        axios.post(`${contextPath}/api/fruit/update`, fruitData)
+            .then(res => {
+                if (res.data && res.data.code === 200) {
+                    alert('水果信息修改成功！');
+                    window.location.href = `${contextPath}/fruit/list`; // 跳转列表页
+                } else {
+                    alert('修改失败: ' + (res.data?.message || '未知错误'));
+                }
+            })
+            .catch(err => {
+                console.error('更新水果失败:', err);
+                alert(`修改失败：${err.response?.data?.message || '网络异常或后端服务未响应'}`);
+            });
+    }
+
+    /**
+     * 返回水果列表页
+     */
+    function goBack() {
+        window.location.href = `${contextPath}/fruit/list`;
+    }
+</script>
+</body>
+</html>

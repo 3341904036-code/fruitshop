@@ -33,7 +33,7 @@ public class User implements Serializable, UserDetails {
     private static final Map<String, String> ROLE_MAP = new HashMap<>();
     static {
         ROLE_MAP.put("Cusm", "顾客");       // 匹配你日志中的roleName=Cusm
-        ROLE_MAP.put("Supplier", "供货商"); // 供货商角色
+        ROLE_MAP.put("Supp", "供货商"); // 供货商角色
         ROLE_MAP.put("Admin", "管理员");    // 管理员角色
     }
 

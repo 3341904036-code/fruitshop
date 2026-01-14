@@ -162,23 +162,16 @@
       </a>
     </div>
     <div class="card-body">
-      <!-- 搜索区域 -->
+      <!-- 搜索区域：删除库存状态筛选 -->
       <div class="search-section">
         <div class="row g-3">
-          <div class="col-md-3">
+          <div class="col-md-4">
             <input type="text" class="form-control" id="searchName" placeholder="搜索水果名称...">
           </div>
-          <div class="col-md-3">
-            <input type="text" class="form-control" id="searchSupplier" placeholder="搜索供应商...">
+          <div class="col-md-4">
+            <input type="text" class="form-control" id="searchSupplier" placeholder="搜索供应商ID...">
           </div>
-          <div class="col-md-3">
-            <select class="form-select" id="searchStatus">
-              <option value="">全部状态</option>
-              <option value="in_stock">有库存</option>
-              <option value="out_of_stock">缺货</option>
-            </select>
-          </div>
-          <div class="col-md-3">
+          <div class="col-md-4">
             <button class="btn btn-primary" onclick="searchFruits()">搜索</button>
             <button class="btn btn-secondary" onclick="resetSearch()">重置</button>
           </div>
@@ -207,8 +200,8 @@
         </table>
       </div>
 
-      <!-- 分页 -->
-      <nav aria-label="水果列表分页" class="mt-3">
+      <!-- 分页：后端未实现分页时隐藏 -->
+      <nav aria-label="水果列表分页" class="mt-3 d-none" id="paginationContainer">
         <ul class="pagination justify-content-center" id="pagination">
           <!-- 动态生成分页按钮 -->
         </ul>
@@ -229,192 +222,244 @@
 
 <!-- 自定义JS逻辑 -->
 <script>
+  // 全局分页变量（后端未实现分页，暂时禁用）
   let currentPage = 1;
-  const pageSize = 10;
+  const pageSize = 30; // 调整为30，容纳所有21条数据
+  const contextPath = '/fruitshop';
+  // 缓存所有水果数据（用于搜索/编辑降级）
+  let allFruits = [];
 
-  // 初始化页面
+  // 页面加载完成后初始化
   $(document).ready(function() {
     loadFruits(currentPage);
   });
 
-  // 加载水果列表
+  /**
+   * 加载水果列表数据（禁用分页，加载全部数据）
+   */
   function loadFruits(page) {
     currentPage = page;
-    const url = `/fruitshop/api/fruit/list/all`;
+    // 禁用分页参数，直接加载全部数据
+    const url = `${contextPath}/api/fruit/list/all`;
 
     axios.get(url)
             .then(res => {
-              if (res.data.code === 200) {
-                const fruits = res.data.data || [];
-                renderFruitTable(fruits);
-                generatePagination(1, 1); // 简化分页，仅一页
+              console.log("【加载水果】后端完整响应：", res);
+              console.log("【加载水果】后端业务数据：", res.data);
+
+              if (res.data && res.data.code === 200) {
+                allFruits = Array.isArray(res.data.data) ? res.data.data : [];
+                console.log("【加载水果】待渲染数据：", allFruits);
+                renderFruitTable(allFruits);
+                // 后端实现分页后再显示分页
+                // $('#paginationContainer').removeClass('d-none');
+                // generatePagination(currentPage, Math.ceil(allFruits.length / pageSize));
               } else {
-                alert('获取水果列表失败: ' + res.data.message);
+                alert('获取水果列表失败: ' + (res.data?.message || '未知错误'));
               }
             })
             .catch(err => {
-              console.error('加载水果列表失败:', err);
-              alert('获取水果列表失败');
+              console.error('【加载水果】请求失败：', err);
+              alert(`获取水果列表失败：请求URL=${url}，请检查接口路径是否正确`);
             });
   }
 
-  // 渲染水果表格
+  /**
+   * 渲染水果表格数据（适配后端小写字段名）
+   */
   function renderFruitTable(fruits) {
     const tbody = $('#fruitTableBody');
     tbody.empty();
 
     if (fruits.length === 0) {
       tbody.append(`
-                <tr>
-                    <td colspan="9" class="text-center">暂无水果数据</td>
-                </tr>
-            `);
+        <tr>
+            <td colspan="9" class="text-center text-muted">暂无水果数据</td>
+        </tr>
+      `);
       return;
     }
 
     fruits.forEach(fruit => {
-      const stockClass = fruit.qty <= 10 ? 'stock-low' : 'stock-normal';
-      const stockText = fruit.qty <= 10 ? `${fruit.qty} (库存不足)` : fruit.qty;
-      const statusText = fruit.qty > 0 ? '有库存' : '缺货';
+      // 适配后端字段：兼容驼峰（fId）和小写（fid）
+      const fId = fruit.fid || fruit.fId || '未生成ID';
+      const fName = fruit.fname || fruit.fName || '未命名水果';
+      const fPrice = fruit.fprice || fruit.fPrice || 0;
+      const quantity = fruit.quantity || 1000;
+      const sId = fruit.sid || fruit.sId || '未关联供应商';
 
+      // 库存状态样式
+      const stockClass = quantity <= 10 ? 'stock-low' : 'stock-normal';
+      const stockText = quantity <= 10 ? `${quantity} (库存不足)` : quantity;
+      const statusText = quantity > 0 ? '有库存' : '缺货';
+
+      // 构建表格行（移除详情按钮）
       const row = `
-                <tr>
-                    <td>${fruit.fId || '--'}</td>
-                    <td>${fruit.fName || '--'}</td>
-                    <td>¥${fruit.price ? fruit.price.toFixed(2) : '0.00'}</td>
-                    <td class="${stockClass}">${stockText}</td>
-                    <td>${fruit.sId || '--'}</td>
-                    <td>${fruit.description || '--'}</td>
-                    <td>${formatDate(fruit.createTime)}</td>
-                    <td>${statusText}</td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-primary action-btn" onclick="editFruit('${fruit.fId}')">编辑</button>
-                        <button class="btn btn-sm btn-outline-danger action-btn" onclick="deleteFruit('${fruit.fId}', '${fruit.fName}')">删除</button>
-                        <button class="btn btn-sm btn-outline-info action-btn" onclick="adjustStock('${fruit.fId}', '${fruit.fName}', ${fruit.qty})">调库存</button>
-                        <button class="btn btn-sm btn-outline-secondary action-btn" onclick="viewDetails('${fruit.fId}')">详情</button>
-                    </td>
-                </tr>
-            `;
+        <tr>
+            <td>${fId}</td>
+            <td>${fName}</td>
+            <td>¥${Number(fPrice).toFixed(2)}</td>
+            <td class="${stockClass}">${stockText}</td>
+            <td>${sId}</td>
+            <td>无描述</td>
+            <td>未知</td>
+            <td>${statusText}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary action-btn" onclick="editFruit('${fId}')">编辑</button>
+                <button class="btn btn-sm btn-outline-danger action-btn" onclick="deleteFruit('${fId}', '${fName}')">删除</button>
+                <button class="btn btn-sm btn-outline-info action-btn" onclick="adjustStock('${fId}', '${fName}', ${quantity})">调库存</button>
+            </td>
+        </tr>
+      `;
       tbody.append(row);
     });
   }
 
-  // 格式化日期
-  function formatDate(dateStr) {
-    if (!dateStr) return '--';
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('zh-CN');
-  }
-
-  // 编辑水果
+  /**
+   * 跳转到编辑水果页面（优化路径）
+   */
   function editFruit(fId) {
-    window.location.href = `/fruitshop/fruit/edit/${fId}`;
+    // 拼接正确的编辑页路径
+    window.location.href = `${contextPath}/fruit/edit/${fId}`;
   }
 
-  // 查看详情
-  function viewDetails(fId) {
-    window.location.href = `/fruitshop/fruit/detail/${fId}`;
-  }
-
-  // 删除水果
+  /**
+   * 删除水果
+   */
   function deleteFruit(fId, fName) {
-    if (confirm(`确定要删除水果 "${fName}" 吗？此操作不可撤销。`)) {
-      axios.delete(`/fruitshop/api/fruit/delete/${fId}`)
-              .then(res => {
-                if (res.data.code === 200) {
-                  alert('删除成功');
-                  loadFruits(currentPage);
-                } else {
-                  alert('删除失败: ' + res.data.message);
-                }
-              })
-              .catch(err => {
-                console.error('删除水果失败:', err);
-                alert('删除失败');
-              });
+    if (!confirm(`确定要删除水果 "${fName || '未命名水果'}" 吗？此操作不可撤销。`)) {
+      return;
     }
-  }
 
-  // 调整库存
-  function adjustStock(fId, fName, currentQty) {
-    const newQty = prompt(`调整 "${fName}" 的库存数量\n当前库存: ${currentQty}\n请输入新的库存数量:`, currentQty);
-
-    if (newQty !== null) {
-      const qty = parseInt(newQty);
-      if (isNaN(qty) || qty < 0) {
-        alert('请输入有效的库存数量');
-        return;
-      }
-
-      if (qty === currentQty) {
-        alert('库存数量未改变');
-        return;
-      }
-
-      axios.post(`/fruitshop/api/fruit/updateQuantity?fId=${fId}&qty=${qty}`)
-              .then(res => {
-                if (res.data.code === 200) {
-                  alert('库存更新成功');
-                  loadFruits(currentPage);
-                } else {
-                  alert('库存更新失败: ' + res.data.message);
-                }
-              })
-              .catch(err => {
-                console.error('库存更新失败:', err);
-                alert('库存更新失败');
-              });
-    }
-  }
-
-  // 搜索水果
-  function searchFruits() {
-    const name = $('#searchName').val().trim();
-    const supplier = $('#searchSupplier').val().trim();
-    const status = $('#searchStatus').val();
-
-    let url = '/fruitshop/api/fruit/list/all';
-    // 这里可以添加实际的搜索参数处理
-
-    axios.get(url)
+    axios.delete(`${contextPath}/api/fruit/delete/${fId}`)
             .then(res => {
-              if (res.data.code === 200) {
-                const fruits = res.data.data || [];
-                renderFruitTable(fruits);
-                generatePagination(1, 1);
+              if (res.data && res.data.code === 200) {
+                alert('删除成功');
+                loadFruits(currentPage);
               } else {
-                alert('搜索失败: ' + res.data.message);
+                alert('删除失败: ' + (res.data?.message || '未知错误'));
               }
             })
             .catch(err => {
-              console.error('搜索水果失败:', err);
-              alert('搜索失败');
+              console.error('【删除水果】请求失败：', err);
+              alert('删除失败，请检查后端服务');
             });
   }
 
-  // 重置搜索
+  /**
+   * 调整水果库存（优化提示，适配后端逻辑）
+   */
+  function adjustStock(fId, fName, currentQty) {
+    // 提示用户当前后端逻辑只能减库存
+    const newQtyInput = prompt(
+            `【注意：当前系统仅支持减少库存】\n调整 "${fName || '未命名水果'}" 的库存数量\n当前库存: ${currentQty}\n请输入新的库存数量（需小于等于当前库存，非负整数）:`,
+            currentQty
+    );
+
+    // 取消输入
+    if (newQtyInput === null) return;
+
+    // 校验输入合法性
+    const newQty = parseInt(newQtyInput);
+    if (isNaN(newQty) || newQty < 0) {
+      alert('请输入有效的非负整数库存数量');
+      return;
+    }
+
+    // 后端逻辑只能减库存，增加前端校验
+    if (newQty > currentQty) {
+      alert('当前系统仅支持减少库存，请输入小于等于当前库存的数值');
+      return;
+    }
+
+    if (newQty === currentQty) {
+      alert('库存数量未改变，无需更新');
+      return;
+    }
+
+    // 兼容后端字段：fId（驼峰）而非fid
+    axios.post(`${contextPath}/api/fruit/updateQuantity?fId=${fId}&qty=${newQty}`)
+            .then(res => {
+              if (res.data && res.data.code === 200) {
+                alert('库存更新成功');
+                loadFruits(currentPage);
+              } else {
+                alert('库存更新失败: ' + (res.data?.message || '未知错误'));
+              }
+            })
+            .catch(err => {
+              console.error('【调整库存】请求失败：', err);
+              alert(`库存更新失败：${err.response?.data?.message || '当前系统仅支持减少库存'}`);
+            });
+  }
+
+  /**
+   * 搜索水果（前端本地搜索，无需后端分页）
+   */
+  function searchFruits() {
+    const name = $('#searchName').val().trim().toLowerCase();
+    const supplier = $('#searchSupplier').val().trim();
+
+    // 前端本地筛选数据
+    let filteredFruits = allFruits;
+    if (name) {
+      filteredFruits = filteredFruits.filter(item => {
+        const fname = item.fname || item.fName || '';
+        return fname.toLowerCase().includes(name);
+      });
+    }
+    if (supplier) {
+      filteredFruits = filteredFruits.filter(item => {
+        const sid = item.sid || item.sId || '';
+        return sid.toString() === supplier;
+      });
+    }
+
+    // 渲染筛选后的数据
+    renderFruitTable(filteredFruits);
+  }
+
+  /**
+   * 重置搜索条件
+   */
   function resetSearch() {
     $('#searchName').val('');
     $('#searchSupplier').val('');
-    $('#searchStatus').val('');
-    loadFruits(1);
+    renderFruitTable(allFruits); // 直接渲染全部数据
   }
 
-  // 生成分页
+  /**
+   * 生成分页按钮（后端实现分页后启用）
+   */
   function generatePagination(current, total) {
     const pagination = $('#pagination');
     pagination.empty();
 
-    // 简单分页实现
-    const prevItem = `<li class="page-item ${current <= 1 ? 'disabled' : ''}">
-            <a class="page-link" href="#" onclick="loadFruits(${Math.max(1, current - 1)})">上一页</a>
-        </li>`;
+    if (total <= 1) return;
 
-    const nextItem = `<li class="page-item ${current >= total ? 'disabled' : ''}">
-            <a class="page-link" href="#" onclick="loadFruits(${Math.min(total, current + 1)})">下一页</a>
-        </li>`;
+    // 上一页按钮
+    const prevItem = `
+      <li class="page-item ${current <= 1 ? 'disabled' : ''}">
+          <a class="page-link" href="#" onclick="loadFruits(${Math.max(1, current - 1)})">上一页</a>
+      </li>
+    `;
+
+    // 下一页按钮
+    const nextItem = `
+      <li class="page-item ${current >= total ? 'disabled' : ''}">
+          <a class="page-link" href="#" onclick="loadFruits(${Math.min(total, current + 1)})">下一页</a>
+      </li>
+    `;
 
     pagination.append(prevItem);
+    // 添加页码数字按钮
+    for (let i = 1; i <= total; i++) {
+      pagination.append(`
+        <li class="page-item ${i === current ? 'active' : ''}">
+            <a class="page-link" href="#" onclick="loadFruits(${i})">${i}</a>
+        </li>
+      `);
+    }
     pagination.append(nextItem);
   }
 </script>

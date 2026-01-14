@@ -64,6 +64,14 @@ public class PageController {
         return "fruit/add";
     }
 
+    // ========== 新增：水果编辑页跳转 ==========
+    @GetMapping("/fruit/edit/{fId}")
+    public String toFruitEdit(@PathVariable String fId, Model model) {
+        addUserToModel(model);
+        model.addAttribute("fId", fId); // 可选：将fId传入页面（前端也可通过URL获取）
+        return "fruit/edit"; // 对应 templates/fruit/edit.html
+    }
+
     // 8. 跳转到顾客添加页面
     @GetMapping("/customer/add")
     public String toCustomerAdd(Model model) {
