@@ -74,7 +74,7 @@ public class AuthServiceImpl implements AuthService {
      * 用户注册 - 同时创建客户或供应商记录
      */
     @Override
-    public boolean register(Integer uId, String password, String remark, Integer roleId) {
+    public boolean register(Integer uId, String password, String remark, Integer roleId, String cEmail, String cCity, String cZip, String cContact, String sCity, String sZip, String sCall) {
         log.info("用户注册:   uId={}, roleId={}, remark={}", uId, roleId, remark);
 
         try {
@@ -107,10 +107,10 @@ public class AuthServiceImpl implements AuthService {
             // 4. 根据角色创建对应的客户或供应商记录
             if (roleId == 2) {
                 // 顾客角色 - 创建Customer记录
-                createCustomerWithDetails(uId, remark);
+                createCustomerWithDetails(uId, remark, cEmail, cCity, cZip, cContact);
             } else if (roleId == 3) {
                 // 供应商角色 - 创建Supplier记录
-                createSupplierWithDetails(uId, remark);
+                createSupplierWithDetails(uId, remark, sCity, sZip, sCall);
             }
 
             log.info("用户注册成功:  uId={}, roleId={}", uId, roleId);
@@ -127,7 +127,7 @@ public class AuthServiceImpl implements AuthService {
     /**
      * 创建客户记录（包含详细信息）
      */
-    private void createCustomerWithDetails(Integer uId, String remark) {
+    private void createCustomerWithDetails(Integer uId, String remark, String cEmail, String cCity, String cZip, String cContact) {
         try {
             Customer existingCustomer = customerMapper.selectOne(
                     new QueryWrapper<Customer>().eq("c_id", uId)
@@ -141,12 +141,18 @@ public class AuthServiceImpl implements AuthService {
             Customer customer = Customer.builder()
                     .cId(uId)
                     .cName(remark)
+                    .cAddress("")
+                    .cCity(cCity != null ? cCity : "")
+                    .cZip(cZip != null ? cZip : "")
+                    .cContact(cContact != null ? cContact : "")
+                    .cEmail(cEmail != null ? cEmail : "")
                     .cVip(0)
+                    .discount(0.0)
                     .build();
 
             int result = customerMapper.insert(customer);
             if (result > 0) {
-                log. info("客户记录创建成功: cId={}, cName={}", uId, remark);
+                log.info("客户记录创建成功: cId={}, cName={}", uId, remark);
             } else {
                 log.warn("客户记录创建失败:   cId={}", uId);
             }
@@ -159,9 +165,9 @@ public class AuthServiceImpl implements AuthService {
     /**
      * 创建供应商记录（包含详细信息）
      */
-    private void createSupplierWithDetails(Integer uId, String remark) {
+    private void createSupplierWithDetails(Integer uId, String remark, String sCity, String sZip, String sCall) {
         try {
-            Supplier existingSupplier = supplierMapper.  selectOne(
+            Supplier existingSupplier = supplierMapper.selectOne(
                     new QueryWrapper<Supplier>().eq("s_id", uId)
             );
 
@@ -171,9 +177,11 @@ public class AuthServiceImpl implements AuthService {
             }
 
             Supplier supplier = Supplier.builder()
-                    .  sId(uId)
+                    .sId(uId)
                     .sName(remark)
-                    .sCall("")
+                    .sCity(sCity != null ? sCity : "")
+                    .sZip(sZip != null ? sZip : "")
+                    .sCall(sCall != null ? sCall : "")
                     .build();
 
             int result = supplierMapper.insert(supplier);
@@ -184,7 +192,7 @@ public class AuthServiceImpl implements AuthService {
             }
 
         } catch (Exception e) {
-            log.error("创建供应商记录异常:  uId={}, error={}", uId, e.  getMessage());
+            log.error("创建供应商记录异常:  uId={}, error={}", uId, e.getMessage());
         }
     }
 

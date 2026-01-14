@@ -1,1 +1,25 @@
-Nothing should be ignored based on the provided file changes. The only modified file is a source code file (`src/main/resources/templates/login.html`), which should not be ignored.
+```
+# Compiled and build artifacts
+*.class
+*.o
+*.obj
+*.out
+
+# Dependencies
+target/
+.gradle/
+
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+
+# Environment
+.env
+.env.local
+*.env.*
+
+# Editors
+.vscode/
+.idea/
+```

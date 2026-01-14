@@ -16,7 +16,7 @@ public interface AuthService {
     /**
      * 用户注册
      */
-    boolean register(Integer uId, String password, String remark, Integer roleId);
+    boolean register(Integer uId, String password, String remark, Integer roleId, String cEmail, String cCity, String cZip, String cContact, String sCity, String sZip, String sCall);
 
     /**
      * 修改密码
