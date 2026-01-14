@@ -11,23 +11,41 @@
             box-sizing: border-box;
         }
         body {
-            background:   linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             font-family: 'Microsoft YaHei', Arial, sans-serif;
+            padding: 15px; /* 移动端留白 */
         }
         .login-wrapper {
             width: 100%;
             max-width: 450px;
             padding: 20px;
+            animation: fadeIn 0.5s ease-in-out; /* 淡入动画 */
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         .login-container {
             background: white;
-            border-radius: 10px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-            padding: 40px;
+            border-radius: 12px; /* 更大圆角更柔和 */
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15); /* 更细腻的阴影 */
+            padding: 45px 40px;
+            position: relative;
+            overflow: hidden;
+        }
+        /* 增加顶部装饰条 */
+        .login-container::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
         .login-title {
             text-align: center;
@@ -36,125 +54,160 @@
             color: #333;
             margin-bottom: 10px;
         }
-        . login-subtitle {
+        .login-subtitle { /* 修复多余空格 */
             text-align: center;
             font-size: 14px;
             color: #999;
             margin-bottom: 30px;
+            letter-spacing: 0.5px; /* 字母间距更舒适 */
         }
         .tabs {
             display: flex;
             margin-bottom: 30px;
-            border-bottom:  2px solid #eee;
+            border-bottom: 2px solid #f5f5f5; /* 更浅的边框 */
         }
         .tab {
             flex: 1;
-            padding:   12px;
+            padding: 12px;
             text-align: center;
             cursor: pointer;
-            border:  none;
+            border: none;
             background: none;
             border-bottom: 3px solid transparent;
             font-size: 14px;
             font-weight: 500;
             color: #666;
-            transition: all 0.3s;
+            transition: all 0.3s ease; /* 统一过渡动画 */
+            position: relative;
         }
         .tab:hover {
             color: #667eea;
+            transform: translateY(-1px); /* 轻微上浮 */
         }
         .tab.active {
             border-bottom-color: #667eea;
             color: #667eea;
+            font-weight: 600;
         }
         .tab-content {
             display: none;
+            animation: contentFade 0.3s ease; /* 内容切换动画 */
+        }
+        @keyframes contentFade {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
         .tab-content.active {
             display: block;
         }
-        . form-group {
-            margin-bottom: 18px;
+        .form-group { /* 修复多余空格 */
+            margin-bottom: 20px; /* 增加表单间距 */
         }
-        . form-group label {
+        .form-group label { /* 修复多余空格 */
             display: block;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
             color: #333;
             font-weight: 500;
-            font-size: 13px;
+            font-size: 14px;
+            letter-spacing: 0.3px;
         }
-        . form-group input,
+        .form-group input,
         .form-group select {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size:   13px;
+            padding: 12px 15px; /* 优化输入框内边距 */
+            border: 1px solid #e0e0e0;
+            border-radius: 8px; /* 更大圆角 */
+            font-size: 14px;
             font-family: inherit;
+            transition: all 0.2s ease; /* 快速过渡 */
+            background-color: #fafafa;
         }
         .form-group input:focus,
         .form-group select:focus {
-            outline:  none;
-            border-color:  #667eea;
-            box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102,126,234,0.15); /* 更柔和的聚焦阴影 */
+            background-color: white;
+            transform: translateY(-1px); /* 聚焦轻微上浮 */
         }
         .form-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 15px;
         }
-        . btn-submit {
+        .btn-submit { /* 修复多余空格 */
             width: 100%;
-            padding: 11px;
+            padding: 12px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            border-radius: 5px;
+            border-radius: 8px;
             font-size: 15px;
-            font-weight:   bold;
+            font-weight: bold;
             cursor: pointer;
-            margin-top: 15px;
-            transition: all 0.3s;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(102,126,234,0.2); /* 按钮默认阴影 */
         }
         .btn-submit:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102,126,234,0.3);
+            transform: translateY(-3px); /* 更明显的上浮 */
+            box-shadow: 0 8px 20px rgba(102,126,234,0.3); /* 增强hover阴影 */
+            background: linear-gradient(135deg, #5a6edb 0%, #6b4190 100%); /* 加深渐变 */
         }
         .btn-submit:disabled {
-            opacity: 0.6;
+            opacity: 0.7;
             cursor: not-allowed;
+            transform: none; /* 禁用时取消上浮 */
+            box-shadow: none;
         }
         .message {
-            padding: 10px;
-            border-radius: 5px;
-            margin-top: 12px;
-            font-size: 13px;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 14px;
             display: none;
+            animation: messageFade 0.3s ease;
+        }
+        @keyframes messageFade {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         .error-message {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fee2e2;
         }
         .success-message {
-            background: #d4edda;
-            color:   #155724;
-            border:   1px solid #c3e6cb;
+            background: #f0fdf4;
+            color: #059669;
+            border: 1px solid #dcfce7;
         }
         .demo-info {
             background: #f8f9fa;
-            padding:   12px;
-            border-radius:   5px;
-            margin-top: 15px;
-            font-size:   11px;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 12px;
             color: #666;
-            line-height: 1.6;
+            line-height: 1.8;
             border-left: 4px solid #667eea;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05); /* 轻微阴影 */
         }
         .demo-info strong {
             color: #333;
             display: block;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+        /* 移动端适配 */
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 30px 20px;
+            }
+            .form-row {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
         }
     </style>
 </head>
@@ -175,28 +228,26 @@
         <div id="login" class="tab-content active">
             <div class="form-group">
                 <label>用户ID</label>
-                <!-- 修复：中文乱码问题 -->
                 <input type="text" id="loginUId" placeholder="请输入用户ID（如：10000）">
             </div>
             <div class="form-group">
                 <label>密码</label>
                 <input type="password" id="loginPassword" placeholder="请输入密码">
             </div>
-            <!-- 修复：给按钮添加id，避免event.target作用域问题 -->
             <button type="button" class="btn-submit" id="loginBtn" onclick="doLogin()">登录</button>
             <div class="message error-message" id="loginError"></div>
             <div class="message success-message" id="loginSuccess"></div>
 
             <div class="demo-info">
                 <strong>📋 演示账号：</strong>
-                顾客:   10000 / 密码: 123456<br>
-                供应商:  100 / 密码: 123456
+                顾客: 10000 / 密码: 123456<br>
+                供应商: 10017 / 密码: 123456
             </div>
         </div>
 
         <!-- 注册表单 -->
         <div id="register" class="tab-content">
-            <h6 style="margin-bottom: 15px; color: #333; font-weight: bold;">基础信息</h6>
+            <h6 style="margin-bottom: 18px; color: #333; font-weight: bold; font-size: 15px;">基础信息</h6>
 
             <div class="form-row">
                 <div class="form-group">
@@ -227,7 +278,7 @@
 
             <!-- 顾客信息 -->
             <div id="customerSection" style="display: none;">
-                <h6 style="margin:   15px 0 12px; color: #333; font-weight: bold;">顾客信息</h6>
+                <h6 style="margin: 18px 0 15px; color: #333; font-weight: bold; font-size: 15px;">顾客信息</h6>
                 <div class="form-group">
                     <label>邮箱</label>
                     <input type="email" id="cEmail" placeholder="example@email.com">
@@ -250,7 +301,7 @@
 
             <!-- 供应商信息 -->
             <div id="supplierSection" style="display: none;">
-                <h6 style="margin:   15px 0 12px; color: #333; font-weight: bold;">供应商信息</h6>
+                <h6 style="margin: 18px 0 15px; color: #333; font-weight: bold; font-size: 15px;">供应商信息</h6>
                 <div class="form-row">
                     <div class="form-group">
                         <label>城市</label>
@@ -282,7 +333,8 @@
 </div>
 
 <script>
-    const API_BASE = '/api';
+    const CONTEXT_PATH = '/fruitshop';
+    const API_BASE = CONTEXT_PATH + '/api';
 
     // 标签切换
     function switchTab(tabName) {
@@ -293,8 +345,6 @@
         tabs.forEach(el => el.classList.remove('active'));
 
         document.getElementById(tabName).classList.add('active');
-
-        // 修正：根据tabName来激活相应的标签
         if(tabName === 'login') {
             document.querySelector('.tab:first-child').classList.add('active');
         } else if(tabName === 'register') {
@@ -309,11 +359,10 @@
         document.getElementById('supplierSection').style.display = roleId === '3' ? 'block' : 'none';
     }
 
-    // 登录（核心修复：改为表单格式请求，参数名匹配后端）
+    // 登录
     function doLogin() {
         const uId = document.getElementById('loginUId').value.trim();
         const password = document.getElementById('loginPassword').value;
-        // 修复：通过id获取按钮，避免event.target作用域问题
         const btn = document.getElementById('loginBtn');
 
         console.log('开始登录，uId=' + uId + ', password=' + password);
@@ -326,39 +375,33 @@
         btn.disabled = true;
         btn.textContent = '登录中...';
 
-        // 修复1：构造表单格式数据（匹配Spring Security formLogin默认解析格式）
-        const formData = new FormData();
-        formData.append('username', uId); // 关键：参数名改为username，匹配后端authentication.getName()
-        formData.append('password', password);
-
-        console.log('发送登录请求:', {username: uId, password: password});
-
         fetch(API_BASE + '/auth/login', {
             method: 'POST',
-            // 修复2：移除Content-Type，让浏览器自动设置multipart/form-data（或改为application/x-www-form-urlencoded）
-            body: formData
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                uId: uId,
+                password: password
+            })
         })
             .then(response => {
                 console.log('登录响应状态:', response.status);
-                // 修复3：处理重定向（Spring Security认证失败会重定向到/login.html?error=true）
-                if (response.redirected) {
-                    // 认证失败，跳转到了错误页面
-                    throw new Error('用户名或密码错误');
-                }
-                return response.json().catch(() => {
-                    // 如果响应不是JSON（比如重定向），返回失败结果
-                    return {code: 500, message: '登录失败'};
-                });
-            })
-            .then(data => {
-                console.log('登录响应数据:', data);
-
-                if (data.code === 200) {
+                if (response.ok || response.status === 302) {
                     showSuccess('loginSuccess', '登录成功，正在跳转...');
                     setTimeout(() => {
-                        window.location.href = '/fruitshop/index.html';
+                        window.location.href = CONTEXT_PATH + '/index.html';
                     }, 1500);
+                    return;
                 } else {
+                    return response.json().catch(() => {
+                        return { code: 500, message: '登录失败：服务器返回异常' };
+                    });
+                }
+            })
+            .then(data => {
+                if (data) {
                     showError('loginError', data.message || '登录失败');
                     btn.disabled = false;
                     btn.textContent = '登录';
@@ -366,7 +409,7 @@
             })
             .catch(err => {
                 console.error('登录请求错误:', err);
-                showError('loginError', err.message || '用户名或密码错误');
+                showError('loginError', '登录请求异常，请检查账号密码或重试');
                 btn.disabled = false;
                 btn.textContent = '登录';
             });
@@ -416,6 +459,7 @@
 
         fetch(API_BASE + '/auth/register', {
             method: 'POST',
+            credentials: 'include',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
             },

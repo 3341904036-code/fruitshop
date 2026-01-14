@@ -4,10 +4,10 @@ import com.fruitshop.dto.LoginDTO;
 import com.fruitshop.entity.User;
 import com.fruitshop.exception.BusinessException;
 import com.fruitshop.service.AuthService;
-import com. fruitshop.util.ResponseUtil;
+import com.fruitshop.util.ResponseUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework. beans.factory.annotation.Autowired;
-import org.springframework. web.bind.annotation.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpSession;
 
@@ -27,11 +27,11 @@ public class AuthController {
      * 用户登录 - REST API
      */
     @PostMapping("/login")
-    public ResponseUtil<? > login(@RequestBody LoginDTO loginDTO, HttpSession session) {
+    public ResponseUtil<?> login(@RequestBody LoginDTO loginDTO, HttpSession session) {
         try {
             log.info("========== 登录请求开始 ==========");
             log.info("请求用户ID: {}, 密码长度: {}", loginDTO.getUId(),
-                    loginDTO.getPassword() != null ?  loginDTO.getPassword().length() : 0);
+                    loginDTO.getPassword() != null ? loginDTO.getPassword().length() : 0);
 
             User user = authService.login(loginDTO);
 
@@ -60,7 +60,7 @@ public class AuthController {
      * 用户注册
      */
     @PostMapping("/register")
-    public ResponseUtil<? > register(
+    public ResponseUtil<?> register(
             @RequestParam Integer uId,
             @RequestParam String password,
             @RequestParam Integer roleId,
@@ -151,7 +151,7 @@ public class AuthController {
      * 获取当前登录用户信息
      */
     @GetMapping("/currentUser")
-    public ResponseUtil<? > getCurrentUser(HttpSession session) {
+    public ResponseUtil<?> getCurrentUser(HttpSession session) {
         try {
             User user = (User) session.getAttribute("user");
 

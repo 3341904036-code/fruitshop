@@ -1,7 +1,7 @@
 package com.fruitshop.service;
 
 import com.fruitshop.dto.LoginDTO;
-import com. fruitshop.entity.User;
+import com.fruitshop.entity.User;
 
 /**
  * 认证服务接口
