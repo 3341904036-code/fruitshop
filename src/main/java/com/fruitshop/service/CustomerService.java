@@ -48,4 +48,6 @@ public interface CustomerService {
      * 查询顾客的消费总额
      */
     Double getTotalSpentByCustomer(Integer cId);
+
+    int count();
 }

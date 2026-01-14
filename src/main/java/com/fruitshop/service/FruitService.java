@@ -52,4 +52,6 @@ public interface FruitService {
      * 更新库存
      */
     boolean updateQuantity(String fId, Integer qty);
+
+    int count();
 }

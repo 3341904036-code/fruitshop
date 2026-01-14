@@ -141,7 +141,7 @@ public class AuthServiceImpl implements AuthService {
             Customer customer = Customer.builder()
                     .cId(uId)
                     .cName(remark)
-                    .cAddress("")
+                    .cAddress("0")
                     .cCity(cCity != null ? cCity : "")
                     .cZip(cZip != null ? cZip : "")
                     .cContact(cContact != null ? cContact : "")

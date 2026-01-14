@@ -103,6 +103,11 @@ public class CustomerServiceImpl implements CustomerService {
         return total != null ? total : 0.0;
     }
 
+    @Override
+    public int count() {
+        return customerMapper.selectCount(null) == null ? 0 : customerMapper.selectCount(null).intValue();
+    }
+
     /**
      * 将Customer转换为CustomerVO
      */

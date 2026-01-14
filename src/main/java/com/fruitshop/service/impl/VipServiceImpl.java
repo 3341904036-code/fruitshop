@@ -126,4 +126,12 @@ public class VipServiceImpl implements VipService {
         log.info("VIP等级设置成功: cId={}, vipLevel={}, discount={}", cId, vipLevel, discount);
         return result > 0;
     }
+
+    @Override
+    public int getVipCustomerCount() {
+        QueryWrapper<Customer> queryWrapper = new QueryWrapper<>();
+        queryWrapper.gt("cVip", 0);
+        Long vipCount = customerMapper.selectCount(queryWrapper);
+        return vipCount == null ? 0 : vipCount.intValue();
+    }
 }

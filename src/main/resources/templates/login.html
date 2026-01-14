@@ -360,6 +360,7 @@
     }
 
     // 登录
+    // 登录函数（修复后）
     function doLogin() {
         const uId = document.getElementById('loginUId').value.trim();
         const password = document.getElementById('loginPassword').value;
@@ -372,19 +373,29 @@
             return;
         }
 
+        // 新增：校验uId是否为数字（前端提前拦截）
+        if (isNaN(uId)) {
+            showError('loginError', '用户ID必须是数字');
+            return;
+        }
+
         btn.disabled = true;
         btn.textContent = '登录中...';
+
+        // 修复：改为表单格式传参
+        const formData = new URLSearchParams();
+        formData.append('uId', uId);
+        formData.append('password', password);
 
         fetch(API_BASE + '/auth/login', {
             method: 'POST',
             credentials: 'include',
             headers: {
-                'Content-Type': 'application/json',
+                // 修复：Content-Type改为表单格式
+                'Content-Type': 'application/x-www-form-urlencoded',
             },
-            body: JSON.stringify({
-                uId: uId,
-                password: password
-            })
+            // 修复：body改为表单数据
+            body: formData
         })
             .then(response => {
                 console.log('登录响应状态:', response.status);

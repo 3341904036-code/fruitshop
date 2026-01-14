@@ -16,7 +16,7 @@ import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
 
 /**
- * Spring Security配置（优化版）
+ * Spring Security配置（最终修复版）
  */
 @Configuration
 @EnableWebSecurity
@@ -60,13 +60,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http
                 .csrf().disable()
                 .authorizeRequests()
-                // 静态资源允许所有访问
-                .antMatchers("/static/**").permitAll()
-                // HTML页面允许所有访问
-                .antMatchers("/*.html").permitAll()
-                .antMatchers("/login").permitAll()
+                // 静态资源路径匹配前端实际引用
+                .antMatchers("/resources/static/**").permitAll()
+                // 只放行登录页面，其他HTML页面需要认证
+                .antMatchers("/login.html").permitAll()
                 .antMatchers("/error").permitAll()
-                // API认证端点
+                // API认证端点放行
                 .antMatchers("/api/auth/**").permitAll()
                 // 其他请求需要认证
                 .anyRequest().authenticated()
@@ -75,16 +74,16 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .formLogin()
                 .loginPage("/login.html")
                 .loginProcessingUrl("/api/auth/login")
-// 新增：显式指定参数名，与前端保持一致
-                .usernameParameter("username")  // 前端传的是username（对应uId）
+                // 参数名改为uId，与前端传参保持一致
+                .usernameParameter("uId")
                 .passwordParameter("password")
                 .defaultSuccessUrl("/index.html", true)
                 .failureUrl("/login.html?error=true")
                 .permitAll()
                 .and()
 
-                .httpBasic()
-                .and()
+                // ========== 关键修复：禁用Basic认证 ==========
+                .httpBasic().disable()
 
                 .logout()
                 .logoutUrl("/api/auth/logout")
@@ -95,7 +94,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
 
                 .sessionManagement()
-                // 关键修改2：关联SessionRegistry，让单会话限制生效
+                // 关联SessionRegistry，让单会话限制生效
                 .maximumSessions(1)
                 .sessionRegistry(sessionRegistry())
                 .expiredUrl("/login.html?expired=true");

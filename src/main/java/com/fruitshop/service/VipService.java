@@ -27,4 +27,6 @@ public interface VipService {
      * 手动设置VIP等级
      */
     boolean setVipLevel(Integer cId, Integer vipLevel);
+
+    int getVipCustomerCount();
 }

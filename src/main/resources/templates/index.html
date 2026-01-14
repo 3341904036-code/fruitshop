@@ -294,11 +294,11 @@
             <div class="sidebar">
                 <div class="list-group">
                     <div class="list-group-item active" onclick="showSection('dashboard')">📊 仪表板</div>
-                    <div class="list-group-item" onclick="showSection('customers')">👥 顾客管理</div>
-                    <div class="list-group-item" onclick="showSection('fruits')">🍓 水果管理</div>
-                    <div class="list-group-item" onclick="showSection('orders')">📦 订单管理</div>
-                    <div class="list-group-item" onclick="showSection('suppliers')">🏭 供应商管理</div>
-                    <div class="list-group-item" onclick="showSection('vip')">⭐ VIP管理</div>
+                    <div class="list-group-item role-dependent" data-role="admin,salor,cusm" onclick="showSection('customers')">👥 顾客管理</div>
+                    <div class="list-group-item role-dependent" data-role="admin,salor" onclick="showSection('fruits')">🍓 水果管理</div>
+                    <div class="list-group-item role-dependent" data-role="admin,salor,cusm" onclick="showSection('orders')">📦 订单管理</div>
+                    <div class="list-group-item role-dependent" data-role="admin,supp" onclick="showSection('suppliers')">🏭 供应商管理</div>
+                    <div class="list-group-item role-dependent" data-role="admin,salor" onclick="showSection('vip')">⭐ VIP管理</div>
                 </div>
             </div>
         </div>
@@ -431,13 +431,63 @@
                 if (response.data.code === 200) {
                     const user = response.data.data;
                     document.getElementById('userInfo').textContent =
-                        `欢迎，${user.remark || user.roleName}`;
+                        `欢迎，${user.remark || user.roleName} (角色: ${getRoleDisplayName(user.roleName)})`;
+
+                    // 根据用户角色过滤菜单
+                    filterMenuByRole(user.roleName);
                 }
             })
             .catch(error => {
                 console.log('用户未登录，重定向到登录页面');
                 window.location.href = '/fruitshop/login.html'; // 修复空格
             });
+    }
+
+    // 根据角色名获取显示名称
+    function getRoleDisplayName(roleName) {
+        switch(roleName) {
+            case 'Admin':
+                return '管理员';
+            case 'Cusm':
+                return '顾客';
+            case 'Supp':
+                return '供应商';
+            case 'Salor':
+                return '销售员';
+            default:
+                return roleName;
+        }
+    }
+
+    // 根据用户角色过滤菜单
+    function filterMenuByRole(userRoleName) {
+        // 将角色名转换为小写用于匹配
+        let roleKey = '';
+        switch(userRoleName) {
+            case 'Admin':
+                roleKey = 'admin';
+                break;
+            case 'Cusm':
+                roleKey = 'cusm';
+                break;
+            case 'Supp':
+                roleKey = 'supp';
+                break;
+            case 'Salor':
+                roleKey = 'salor';
+                break;
+            default:
+                roleKey = 'cusm'; // 默认为顾客角色
+        }
+
+        // 隐藏没有权限的菜单项
+        const menuItems = document.querySelectorAll('.role-dependent');
+        menuItems.forEach(item => {
+            const allowedRoles = item.getAttribute('data-role').split(',');
+            if (!allowedRoles.includes(roleKey)) {
+                item.classList.add('hidden-by-role');
+            }
+        });
     }
 
     // 加载仪表板数据

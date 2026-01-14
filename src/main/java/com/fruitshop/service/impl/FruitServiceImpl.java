@@ -82,7 +82,10 @@ public class FruitServiceImpl implements FruitService {
     public List<Fruit> getLowStockFruits(Integer minQty) {
         return fruitMapper.selectLowStock(minQty);
     }
-
+    @Override
+    public int count() {
+        return fruitMapper.selectCount(null) == null ? 0 : fruitMapper.selectCount(null).intValue();
+    }
     @Override
     public boolean updateQuantity(String fId, Integer qty) {
         log.info("更新库存: fId={}, qty={}", fId, qty);

@@ -271,6 +271,11 @@ public class OrderServiceImpl implements OrderService {
                 oNum, order.getOriginalPrice(), order.getDiscount(), total);
     }
 
+    @Override
+    public int count() {
+        return orderMapper.selectCount(null) == null ? 0 : orderMapper.selectCount(null).intValue();
+    }
+
     /**
      * 将Order实体转换为OrderVO视图对象
      */
