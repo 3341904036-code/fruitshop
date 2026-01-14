@@ -36,7 +36,7 @@ public class AuthController {
             User user = authService.login(loginDTO);
 
             // 将用户信息存入Session
-            session.setAttribute("user", user);
+            session.setAttribute("loginUser", user);
             session.setAttribute("userId", user.getUId());
             session.setAttribute("roleId", user.getRoleId());
             session.setAttribute("roleName", user.getRoleName());
@@ -153,7 +153,7 @@ public class AuthController {
     @GetMapping("/currentUser")
     public ResponseUtil<?> getCurrentUser(HttpSession session) {
         try {
-            User user = (User) session.getAttribute("user");
+            User user = (User) session.getAttribute("loginUser");
 
             if (user == null) {
                 return ResponseUtil.error(401, "用户未登录");
