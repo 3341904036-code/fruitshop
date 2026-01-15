@@ -86,29 +86,114 @@
 ## 项目结构
 
 ```
-fruit-shop-management/
-├── src/
-│   ├── main/
-│   │   ├── java/
-│   │   │   └── com/
-│   │   │       └── fruitshop/
-│   │   │           ├── controller/      # 控制器层
-│   │   │           ├── model/          # 数据模型
-│   │   │           ├── view/           # 视图组件
-│   │   │           ├── dao/            # 数据访问对象
-│   │   │           ├── service/        # 业务逻辑层
-│   │   │           ├── util/           # 工具类
-│   │   │           └── Main.java       # 主入口类
-│   │   └── resources/
-│   │       ├── database/               # 数据库相关资源
-│   │       ├── config/                 # 配置文件
-│   │       └── images/                 # 图片资源
-│   └── test/
-│       └── java/                       # 测试代码
-├── docs/                               # 项目文档
-├── target/                             # 构建输出目录
-├── pom.xml                            # Maven配置文件
-└── README.md                          # 项目说明文档
+fruitshop-manager/
+├── src/main/java/com/fruitshop/
+│   ├── FruitshopApplication.java          # SpringBoot启动类
+│   ├── config/                           # 配置类
+│   │   ├── AESPasswordEncoder.java       # AES密码编码器（补充）
+│   │   ├── CustomAuthenticationProvider.java # 自定义认证提供者（补充）
+│   │   ├── DatabaseConfig.java           # 数据源配置
+│   │   ├── MyBatisPlusConfig.java        # MyBatis-Plus配置
+│   │   ├── SecurityConfig.java           # 安全配置
+│   │   ├── TransactionConfig.java        # 事务配置
+│   │   └── WebMvcConfig.java             # MVC配置
+│   ├── controller/                       # 控制器
+│   │   ├── AuthController.java           # 认证控制器
+│   │   ├── CustomerController.java       # 顾客控制器
+│   │   ├── DashboardController.java      # 仪表板控制器（补充）
+│   │   ├── FruitController.java          # 水果控制器
+│   │   ├── OperationLogController.java   # 操作日志控制器（补充）
+│   │   ├── OrderController.java          # 订单控制器
+│   │   ├── PageController.java           # 页面控制器（补充）
+│   │   ├── SupplierController.java       # 供应商控制器（补充）
+│   │   ├── ViewController.java           # 视图控制器（补充）
+│   │   └── VipController.java           # VIP控制器（补充）
+│   ├── service/                          # 服务层接口
+│   │   ├── AuthService.java              # 认证服务接口
+│   │   ├── CustomerService.java          # 顾客服务接口
+│   │   ├── FruitService.java             # 水果服务接口
+│   │   ├── OperationLogService.java      # 操作日志服务接口（补充）
+│   │   ├── OrderService.java             # 订单服务接口
+│   │   └── VipService.java               # VIP服务接口
+│   ├── service/impl/                     # 服务层实现类
+│   │   ├── AuthServiceImpl.java          # 认证服务实现
+│   │   ├── CustomerServiceImpl.java      # 顾客服务实现
+│   │   ├── FruitServiceImpl.java         # 水果服务实现
+│   │   ├── OrderServiceImpl.java         # 订单服务实现
+│   │   ├── UserDetailsServiceImpl.java   # 用户详情服务实现（补充）
+│   │   └── VipServiceImpl.java          # VIP服务实现（补充）
+│   ├── dao/                              # 数据访问层（或mapper）
+│   │   ├── CustomerMapper.java
+│   │   ├── FruitMapper.java
+│   │   ├── OperationLogMapper.java
+│   │   ├── OrderItemMapper.java
+│   │   ├── OrderMapper.java
+│   │   ├── RoleMapper.java
+│   │   ├── SupplierMapper.java
+│   │   └── UserMapper.java
+│   ├── entity/                           # 实体类
+│   │   ├── Customer.java
+│   │   ├── Fruit.java
+│   │   ├── OperationLog.java
+│   │   ├── Order.java
+│   │   ├── OrderItem.java
+│   │   ├── Role.java
+│   │   ├── Supplier.java
+│   │   └── User.java
+│   ├── dto/                              # 数据传输对象
+│   │   ├── LoginDTO.java
+│   │   ├── OrderDTO.java
+│   │   ├── OrderItemDTO.java
+│   │   └── VipDiscountDTO.java
+│   ├── vo/                               # 视图对象
+│   │   ├── CustomerVO.java
+│   │   ├── OrderItemVO.java
+│   │   └── OrderVO.java
+│   ├── util/                             # 工具类
+│   │   ├── AESUtil.java                  # AES加密工具
+│   │   ├── ResponseUtil.java             # 响应工具
+│   │   ├── Result.java                   # 统一返回结果（补充）
+│   │   └── VipDiscountUtil.java          # VIP折扣计算工具
+│   ├── aspect/                           # AOP切面
+│   │   ├── LogAspect.java                # 日志切面
+│   │   └── TransactionAspect.java        # 事务切面
+│   ├── listener/                         # 监听器
+│   │   └── SessionListener.java          # Session监听器
+│   └── exception/                        # 异常处理
+│       ├── BusinessException.java        # 业务异常
+│       └── GlobalExceptionHandler.java   # 全局异常处理
+├── src/main/resources/
+│   ├── application.yml                   # 配置文件
+│   ├── static/                           # 静态资源
+│   │   ├── css/
+│   │   │   └── bootstrap.min.css         # 补充
+│   │   ├── js/
+│   │   │   ├── axios.min.js
+│   │   │   ├── jquery-3.6.4.min.js
+│   │   │   └── bootstrap.bundle.min.js
+│   │   └── img/
+│   └── templates/                        # 模板文件
+│       ├── customer/                     # 顾客管理页
+│       │   ├── add.html
+│       │   ├── edit.html
+│       │   └── list.html
+│       ├── dashboard/                    # 仪表板页（补充）
+│       │   └── export.html
+│       ├── error/                        # 错误页
+│       │   ├── 404.html
+│       │   └── 500.html
+│       ├── fruit/                        # 水果管理页
+│       │   ├── add.html
+│       │   ├── edit.html
+│       │   └── list.html
+│       ├── order/                        # 订单管理页
+│       │   ├── add.html
+│       │   └── list.html
+│       ├── supplier/                     # 供应商管理页
+│       ├── login.html                    # 登录页（补充，通常在根目录）
+│       └── index.html                    # 首页（补充，通常在根目录）
+├── pom.xml                               # Maven配置
+└── README.md                             # 项目说明文档
 ```
 
 ## 开发指南
