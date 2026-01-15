@@ -104,6 +104,35 @@
       color: #dc3545;
       font-weight: bold;
     }
+    .disabled-btn {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+    /* 新增：详情模态框样式 */
+    .modal-header {
+      background-color: #fd7e14;
+      color: #fff;
+      border-bottom: none;
+    }
+    .modal-title {
+      font-weight: 600;
+    }
+    .modal-footer {
+      border-top: none;
+    }
+    .detail-table th {
+      width: 20%;
+    }
+    .item-table th {
+      font-size: 0.9rem;
+    }
+    .item-table td {
+      vertical-align: middle;
+    }
+    .subtotal-text {
+      font-weight: 600;
+      color: #dc3545;
+    }
     @media (max-width: 768px) {
       .main-content {
         padding: 1rem 0;
@@ -113,6 +142,9 @@
       }
       .btn {
         margin-bottom: 0.25rem;
+      }
+      .detail-table th {
+        width: 30%;
       }
     }
   </style>
@@ -174,10 +206,10 @@
             <input type="text" class="form-control" id="searchOrderNum" placeholder="搜索订单号...">
           </div>
           <div class="col-md-3">
-            <input type="text" class="form-control" id="searchCustomer" placeholder="搜索顾客...">
+            <input type="text" class="form-control" id="searchCustomer" placeholder="搜索顾客ID...">
           </div>
           <div class="col-md-3">
-            <select class="form-select" id="searchStatus">
+            <select class="form-select" id="searchStatus" disabled>
               <option value="">全部状态</option>
               <option value="pending">待处理</option>
               <option value="completed">已完成</option>
@@ -197,11 +229,11 @@
           <thead>
           <tr>
             <th>订单号</th>
-            <th>顾客ID</th>
-            <th>总金额</th>
-            <th>商品数量</th>
+            <th>顾客ID（名称）</th>
+            <th>原价</th>
+            <th>折扣</th>
+            <th>实付金额</th>
             <th>下单时间</th>
-            <th>状态</th>
             <th>操作</th>
           </tr>
           </thead>
@@ -211,12 +243,80 @@
         </table>
       </div>
 
-      <!-- 分页 -->
-      <nav aria-label="订单列表分页" class="mt-3">
+      <!-- 分页：后端未实现分页时隐藏 -->
+      <nav aria-label="订单列表分页" class="mt-3 d-none" id="paginationContainer">
         <ul class="pagination justify-content-center" id="pagination">
           <!-- 动态生成分页按钮 -->
         </ul>
       </nav>
+    </div>
+  </div>
+</div>
+
+<!-- 新增：订单详情模态框 -->
+<div class="modal fade" id="orderDetailModal" tabindex="-1" aria-labelledby="orderDetailModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="orderDetailModalLabel">订单详情 - <span id="modalOrderNum">0</span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- 订单主信息 -->
+        <table class="table table-borderless detail-table mb-4">
+          <tbody>
+          <tr>
+            <th>订单号</th>
+            <td id="detailOrderNum">-</td>
+          </tr>
+          <tr>
+            <th>顾客ID</th>
+            <td id="detailCustomerId">-</td>
+          </tr>
+          <tr>
+            <th>下单时间</th>
+            <td id="detailOrderTime">-</td>
+          </tr>
+          <tr>
+            <th>订单原价</th>
+            <td id="detailOriginalPrice">-</td>
+          </tr>
+          <tr>
+            <th>折扣</th>
+            <td id="detailDiscount">-</td>
+          </tr>
+          <tr>
+            <th>实付金额</th>
+            <td id="detailPayPrice" class="subtotal-text">-</td>
+          </tr>
+          </tbody>
+        </table>
+
+        <!-- 订单项列表 -->
+        <h6 class="mb-2">商品明细</h6>
+        <div class="table-responsive">
+          <table class="table table-striped table-sm item-table">
+            <thead>
+            <tr>
+              <th>商品序号</th>
+              <th>水果ID</th>
+              <th>水果名称</th>
+              <th>购买数量</th>
+              <th>单价</th>
+              <th>小计</th>
+            </tr>
+            </thead>
+            <tbody id="orderItemsTableBody">
+            <tr>
+              <td colspan="6" class="text-center text-muted">加载中...</td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+      </div>
     </div>
   </div>
 </div>
@@ -233,190 +333,297 @@
 
 <!-- 自定义JS逻辑 -->
 <script>
+  // 全局分页变量（后端未实现分页，暂时禁用）
   let currentPage = 1;
-  const pageSize = 10;
+  const pageSize = 10; // 每页显示条数
+  const contextPath = '/fruitshop'; // 统一上下文路径，避免硬编码
+  // 缓存所有订单数据（用于前端搜索/筛选）
+  let allOrders = [];
+  // 模态框实例
+  let orderDetailModal;
 
-  // 初始化页面
+  // 页面加载完成后初始化
   $(document).ready(function() {
     loadOrders(currentPage);
+    // 初始化模态框
+    orderDetailModal = new bootstrap.Modal(document.getElementById('orderDetailModal'));
   });
 
-  // 加载订单列表
+  /**
+   * 加载订单列表数据（禁用分页，加载全部数据）
+   */
   function loadOrders(page) {
     currentPage = page;
-    const url = `/fruitshop/api/order/list/all`;
+    // 禁用分页参数，直接加载全部数据
+    const url = `${contextPath}/api/order/list/all`;
 
     axios.get(url)
             .then(res => {
-              if (res.data.code === 200) {
-                const orders = res.data.data || [];
-                renderOrderTable(orders);
-                generatePagination(1, 1); // 简化分页，仅一页
+              console.log("【加载订单】后端完整响应：", res);
+              console.log("【加载订单】后端业务数据：", res.data);
+
+              if (res.data && res.data.code === 200) {
+                allOrders = Array.isArray(res.data.data) ? res.data.data : [];
+                console.log("【加载订单】待渲染数据：", allOrders);
+                renderOrderTable(allOrders);
+                // 后端实现分页后再显示分页
+                // $('#paginationContainer').removeClass('d-none');
+                // generatePagination(currentPage, Math.ceil(allOrders.length / pageSize));
               } else {
-                alert('获取订单列表失败: ' + res.data.message);
+                alert('获取订单列表失败: ' + (res.data?.message || '未知错误'));
               }
             })
             .catch(err => {
-              console.error('加载订单列表失败:', err);
-              alert('获取订单列表失败');
+              console.error('【加载订单】请求失败：', err);
+              alert(`获取订单列表失败：请求URL=${url}，请检查接口路径是否正确`);
             });
   }
 
-  // 渲染订单表格
+  /**
+   * 渲染订单表格数据（适配后端真实返回的字段）
+   */
   function renderOrderTable(orders) {
     const tbody = $('#orderTableBody');
     tbody.empty();
 
     if (orders.length === 0) {
       tbody.append(`
-                <tr>
-                    <td colspan="7" class="text-center">暂无订单数据</td>
-                </tr>
-            `);
+        <tr>
+            <td colspan="7" class="text-center text-muted">暂无订单数据</td>
+        </tr>
+      `);
       return;
     }
 
-    orders.forEach(order => {
-      const statusClass = getStatusClass(order.status);
-      const statusText = getStatusText(order.status);
+    orders.forEach((order) => {
+      // 适配后端真实返回的字段（关键修改：使用真实订单号、顾客ID）
+      const oNum = order.oNum || order.onum; // 真实订单号（如50002）
+      const cId = order.cId || order.cid; // 真实顾客ID（如10000）
+      const cnameDisplay = `顾客ID:${cId}`; // 优化显示
+      const originalPrice = order.originalPrice || 0; // 原价
+      const discount = (order.discount || 1) * 10; // 折扣×10（如1→10折）
+      const pay = order.pay || 0; // 实付金额
+      const oDate = order.oDate || order.odate; // 下单时间
 
+      // 格式化下单时间
+      const orderTimeText = formatDate(oDate);
+
+      // 构建表格行（移除状态列，因数据库无status字段；完成/取消按钮添加禁用提示）
       const row = `
-                <tr>
-                    <td>${order.oNum || '--'}</td>
-                    <td>${order.cId || '--'}</td>
-                    <td>¥${order.totalAmount ? order.totalAmount.toFixed(2) : '0.00'}</td>
-                    <td>${order.quantity || 0}</td>
-                    <td>${formatDate(order.orderTime)}</td>
-                    <td class="${statusClass}">${statusText}</td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-primary action-btn" onclick="viewDetails(${order.oNum})">详情</button>
-                        <button class="btn btn-sm btn-outline-success action-btn" onclick="completeOrder(${order.oNum})">完成</button>
-                        <button class="btn btn-sm btn-outline-danger action-btn" onclick="cancelOrder(${order.oNum}, ${order.oNum})">取消</button>
-                    </td>
-                </tr>
-            `;
+        <tr>
+            <td>${oNum}</td>
+            <td>${cnameDisplay}</td>
+            <td>¥${Number(originalPrice).toFixed(2)}</td>
+            <td>${discount}折</td>
+            <td>¥${Number(pay).toFixed(2)}</td>
+            <td>${orderTimeText}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary action-btn" onclick="viewDetails('${oNum}')">详情</button>
+                <button class="btn btn-sm btn-outline-success action-btn disabled-btn" onclick="showUnavailableTip()">完成</button>
+                <button class="btn btn-sm btn-outline-danger action-btn disabled-btn" onclick="showUnavailableTip()">取消</button>
+            </td>
+        </tr>
+      `;
       tbody.append(row);
     });
   }
 
-  // 获取状态样式类
-  function getStatusClass(status) {
-    if (status === 'completed') return 'order-status-completed';
-    if (status === 'cancelled') return 'order-status-cancelled';
-    return 'order-status-pending';
-  }
-
-  // 获取状态文本
-  function getStatusText(status) {
-    if (status === 'completed') return '已完成';
-    if (status === 'cancelled') return '已取消';
-    return '待处理';
-  }
-
-  // 格式化日期
+  /**
+   * 格式化日期时间显示
+   */
   function formatDate(dateStr) {
-    if (!dateStr) return '--';
-    const date = new Date(dateStr);
-    return date.toLocaleString('zh-CN');
+    if (!dateStr) return '未知时间';
+    try {
+      const date = new Date(dateStr);
+      // 格式化为YYYY-MM-DD HH:MM:SS
+      return `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`;
+    } catch (e) {
+      return '格式错误';
+    }
   }
 
-  // 查看详情
+  /**
+   * 查看订单详情（调用后端接口，渲染模态框）
+   */
   function viewDetails(oNum) {
-    window.location.href = `/fruitshop/order/detail/${oNum}`;
-  }
-
-  // 完成订单
-  function completeOrder(oNum) {
-    if (confirm(`确定要标记订单 ${oNum} 为已完成吗？`)) {
-      axios.put(`/fruitshop/api/order/update`, {
-        oNum: oNum,
-        status: 'completed'
-      })
-              .then(res => {
-                if (res.data.code === 200) {
-                  alert('订单状态更新成功');
-                  loadOrders(currentPage);
-                } else {
-                  alert('订单状态更新失败: ' + res.data.message);
-                }
-              })
-              .catch(err => {
-                console.error('订单状态更新失败:', err);
-                alert('订单状态更新失败');
-              });
+    if (!oNum) {
+      alert('订单号不能为空！');
+      return;
     }
-  }
 
-  // 取消订单
-  function cancelOrder(oNum, displayNum) {
-    if (confirm(`确定要取消订单 ${displayNum} 吗？`)) {
-      axios.put(`/fruitshop/api/order/update`, {
-        oNum: oNum,
-        status: 'cancelled'
-      })
-              .then(res => {
-                if (res.data.code === 200) {
-                  alert('订单已取消');
-                  loadOrders(currentPage);
-                } else {
-                  alert('订单取消失败: ' + res.data.message);
-                }
-              })
-              .catch(err => {
-                console.error('订单取消失败:', err);
-                alert('订单取消失败');
-              });
-    }
-  }
+    // 清空模态框原有数据
+    clearModalData();
+    // 设置模态框标题的订单号
+    $('#modalOrderNum').text(oNum);
 
-  // 搜索订单
-  function searchOrders() {
-    const orderNum = $('#searchOrderNum').val().trim();
-    const customer = $('#searchCustomer').val().trim();
-    const status = $('#searchStatus').val();
-
-    let url = '/fruitshop/api/order/list/all';
-    // 这里可以添加实际的搜索参数处理
-
+    // 调用后端详情接口
+    const url = `${contextPath}/api/order/detail/${oNum}`;
     axios.get(url)
             .then(res => {
-              if (res.data.code === 200) {
-                const orders = res.data.data || [];
-                renderOrderTable(orders);
-                generatePagination(1, 1);
+              console.log("【订单详情】后端响应：", res);
+              if (res.data && res.data.code === 200) {
+                const order = res.data.data;
+                // 渲染订单主信息
+                renderOrderDetail(order);
+                // 渲染订单项
+                renderOrderItems(order.orderItems || []);
+                // 显示模态框
+                orderDetailModal.show();
               } else {
-                alert('搜索失败: ' + res.data.message);
+                alert('获取订单详情失败: ' + (res.data?.message || '未知错误'));
               }
             })
             .catch(err => {
-              console.error('搜索订单失败:', err);
-              alert('搜索失败');
+              console.error('【订单详情】请求失败：', err);
+              // 渲染空数据提示
+              $('#orderItemsTableBody').html(`
+          <tr>
+            <td colspan="6" class="text-center text-danger">获取详情失败：${err.message || '接口调用异常'}</td>
+          </tr>
+        `);
+              // 显示模态框（带失败提示）
+              orderDetailModal.show();
             });
   }
 
-  // 重置搜索
+  /**
+   * 渲染订单主信息到模态框
+   */
+  function renderOrderDetail(order) {
+    $('#detailOrderNum').text(order.oNum || order.onum || '-');
+    $('#detailCustomerId').text(order.cId || order.cid || '-');
+    $('#detailOrderTime').text(formatDate(order.oDate || order.odate || '-'));
+    $('#detailOriginalPrice').text(`¥${Number(order.originalPrice || 0).toFixed(2)}`);
+    $('#detailDiscount').text(`${Number(order.discount || 1) * 10}折`);
+    $('#detailPayPrice').text(`¥${Number(order.pay || 0).toFixed(2)}`);
+  }
+
+  /**
+   * 渲染订单项到模态框
+   */
+  function renderOrderItems(items) {
+    const tbody = $('#orderItemsTableBody');
+    tbody.empty();
+
+    if (items.length === 0) {
+      tbody.append(`
+        <tr>
+          <td colspan="6" class="text-center text-muted">该订单暂无商品明细</td>
+        </tr>
+      `);
+      return;
+    }
+
+    items.forEach((item, index) => {
+      const row = `
+        <tr>
+          <td>${item.oItem || index + 1}</td>
+          <td>${item.fId || item.fid || '-'}</td>
+          <td>${item.fName || item.fname || '未知水果'}</td>
+          <td>${item.quantity || 0}</td>
+          <td>¥${Number(item.itemPrice || 0).toFixed(2)}</td>
+          <td>¥${Number(item.subtotal || 0).toFixed(2)}</td>
+        </tr>
+      `;
+      tbody.append(row);
+    });
+  }
+
+  /**
+   * 清空模态框数据
+   */
+  function clearModalData() {
+    $('#detailOrderNum').text('-');
+    $('#detailCustomerId').text('-');
+    $('#detailOrderTime').text('-');
+    $('#detailOriginalPrice').text('-');
+    $('#detailDiscount').text('-');
+    $('#detailPayPrice').text('-');
+    $('#orderItemsTableBody').html(`
+      <tr>
+        <td colspan="6" class="text-center text-muted">加载中...</td>
+      </tr>
+    `);
+  }
+
+  /**
+   * 提示功能暂不可用（因数据库无status字段）
+   */
+  function showUnavailableTip() {
+    alert('订单完成/取消功能暂未实现：数据库orders表未配置订单状态（status）字段，请先在后端添加该字段并实现对应更新接口。');
+  }
+
+  /**
+   * 搜索订单（前端本地筛选，适配真实字段）
+   */
+  function searchOrders() {
+    const orderNum = $('#searchOrderNum').val().trim().toLowerCase();
+    const customerId = $('#searchCustomer').val().trim();
+
+    // 前端本地筛选数据
+    let filteredOrders = allOrders;
+
+    // 按订单号筛选（真实订单号，如50002）
+    if (orderNum) {
+      filteredOrders = filteredOrders.filter(item => {
+        const onum = (item.oNum || item.onum || '').toString().toLowerCase();
+        return onum.includes(orderNum);
+      });
+    }
+
+    // 按顾客ID筛选（真实顾客ID，如10000）
+    if (customerId) {
+      filteredOrders = filteredOrders.filter(item => {
+        const cid = (item.cId || item.cid || '').toString();
+        return cid === customerId;
+      });
+    }
+
+    // 渲染筛选后的数据
+    renderOrderTable(filteredOrders);
+  }
+
+  /**
+   * 重置搜索条件
+   */
   function resetSearch() {
     $('#searchOrderNum').val('');
     $('#searchCustomer').val('');
-    $('#searchStatus').val('');
-    loadOrders(1);
+    renderOrderTable(allOrders); // 直接渲染全部数据
   }
 
-  // 生成分页
+  /**
+   * 生成分页按钮（后端实现分页后启用）
+   */
   function generatePagination(current, total) {
     const pagination = $('#pagination');
     pagination.empty();
 
-    // 简单分页实现
-    const prevItem = `<li class="page-item ${current <= 1 ? 'disabled' : ''}">
-            <a class="page-link" href="#" onclick="loadOrders(${Math.max(1, current - 1)})">上一页</a>
-        </li>`;
+    if (total <= 1) return;
 
-    const nextItem = `<li class="page-item ${current >= total ? 'disabled' : ''}">
-            <a class="page-link" href="#" onclick="loadOrders(${Math.min(total, current + 1)})">下一页</a>
-        </li>`;
+    // 上一页按钮
+    const prevItem = `
+      <li class="page-item ${current <= 1 ? 'disabled' : ''}">
+          <a class="page-link" href="#" onclick="loadOrders(${Math.max(1, current - 1)})">上一页</a>
+      </li>
+    `;
+
+    // 下一页按钮
+    const nextItem = `
+      <li class="page-item ${current >= total ? 'disabled' : ''}">
+          <a class="page-link" href="#" onclick="loadOrders(${Math.min(total, current + 1)})">下一页</a>
+      </li>
+    `;
 
     pagination.append(prevItem);
+    // 添加页码数字按钮
+    for (let i = 1; i <= total; i++) {
+      pagination.append(`
+        <li class="page-item ${i === current ? 'active' : ''}">
+            <a class="page-link" href="#" onclick="loadOrders(${i})">${i}</a>
+        </li>
+      `);
+    }
     pagination.append(nextItem);
   }
 </script>

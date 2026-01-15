@@ -43,6 +43,6 @@ public interface OrderService {
      * 计算订单总额
      */
     void calculateOrderTotal(Integer oNum);
-
+    OrderVO getOrderDetail(Integer oNum);
     int count();
 }

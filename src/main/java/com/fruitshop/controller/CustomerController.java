@@ -3,11 +3,13 @@ package com.fruitshop.controller;
 import com.fruitshop.entity.Customer;
 import com.fruitshop.exception.BusinessException;
 import com.fruitshop.service.CustomerService;
-import com.fruitshop. util.ResponseUtil;
+import com.fruitshop.util.ResponseUtil;
 import com.fruitshop.vo.CustomerVO;
-import lombok.extern.slf4j. Slf4j;
-import org. springframework.beans.factory.annotation. Autowired;
-import org. springframework.web.bind.annotation.*;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -26,7 +28,7 @@ public class CustomerController {
      * 新增顾客
      */
     @PostMapping("/add")
-    public ResponseUtil<? > addCustomer(@RequestBody Customer customer) {
+    public ResponseUtil<?> addCustomer(@RequestBody Customer customer) {
         try {
             log.info("新增顾客请求: cName={}", customer.getCName());
 
@@ -80,7 +82,7 @@ public class CustomerController {
         try {
             log.info("删除顾客请求: cId={}", cId);
 
-            boolean result = customerService. deleteCustomer(cId);
+            boolean result = customerService.deleteCustomer(cId);
 
             if (result) {
                 log.info("顾客删除成功: cId={}", cId);
@@ -119,7 +121,7 @@ public class CustomerController {
      * 查询所有顾客
      */
     @GetMapping("/list/all")
-    public ResponseUtil<? > getAllCustomers() {
+    public ResponseUtil<?> getAllCustomers() {
         try {
             log.info("查询所有顾客");
 
@@ -142,7 +144,7 @@ public class CustomerController {
 
             List<CustomerVO> customers = customerService.getVipCustomers();
 
-            return ResponseUtil. success("查询成功", customers);
+            return ResponseUtil.success("查询成功", customers);
         } catch (Exception e) {
             log.error("查询VIP顾客异常", e);
             return ResponseUtil.error("查询VIP顾客异常");
@@ -157,9 +159,9 @@ public class CustomerController {
         try {
             log.info("根据城市查询顾客: city={}", city);
 
-            List<CustomerVO> customers = customerService. getCustomersByCity(city);
+            List<CustomerVO> customers = customerService.getCustomersByCity(city);
 
-            return ResponseUtil. success("查询成功", customers);
+            return ResponseUtil.success("查询成功", customers);
         } catch (Exception e) {
             log.error("根据城市查询顾客异常", e);
             return ResponseUtil.error("根据城市查询顾客异常");
@@ -180,6 +182,44 @@ public class CustomerController {
         } catch (Exception e) {
             log.error("查询消费总额异常", e);
             return ResponseUtil.error("查询消费总额异常");
+        }
+    }
+
+    // ====================== 新增：查询顾客折扣接口（和原有代码风格一致） ======================
+    /**
+     * 根据顾客ID查询折扣（VIP折扣/默认1.0）
+     */
+    /**
+     * 根据顾客ID查询折扣（VIP折扣/默认1.0）
+     */
+    @GetMapping("/discount/{cId}")
+    public ResponseUtil<?> getCustomerDiscount(@PathVariable Integer cId) {
+        try {
+            log.info("查询顾客折扣请求: cId={}", cId);
+
+            // 1. 基础参数校验
+            if (cId == null || cId <= 0) {
+                throw new BusinessException("顾客ID必须为正整数");
+            }
+
+            // 2. 复用原有Service逻辑查询顾客
+            CustomerVO customer = customerService.getCustomerById(cId);
+            if (customer == null) {
+                throw new BusinessException("顾客不存在");
+            }
+
+            // 3. 核心修复：读取CustomerVO中从数据库查询到的真实折扣值（替代硬编码的1.0）
+            BigDecimal discount = BigDecimal.valueOf(customer.getDiscount());
+            log.info("顾客ID:{} 折扣查询成功，折扣率:{}", cId, discount);
+
+            return ResponseUtil.success("查询成功", discount);
+
+        } catch (BusinessException e) {
+            log.error("查询顾客折扣失败: {}", e.getMessage());
+            return ResponseUtil.error(400, e.getMessage());
+        } catch (Exception e) {
+            log.error("查询顾客折扣异常 cId={}", cId, e);
+            return ResponseUtil.error("查询折扣异常：" + e.getMessage());
         }
     }
 }

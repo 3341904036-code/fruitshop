@@ -59,6 +59,17 @@
       border-radius: 6px;
       padding: 0.75rem 1rem;
     }
+    .form-control:disabled {
+      background-color: #e9ecef;
+      border-color: #ced4da;
+      color: #495057;
+      cursor: not-allowed;
+    }
+    .form-label.required::after {
+      content: '*';
+      color: #dc3545;
+      margin-left: 4px;
+    }
     .btn {
       border-radius: 6px;
       font-weight: 500;
@@ -67,12 +78,22 @@
     .btn:hover {
       transform: scale(1.02);
     }
+    .btn:disabled {
+      transform: none;
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
     .order-item {
       border: 1px solid #dee2e6;
       border-radius: 8px;
       padding: 1rem;
       margin-bottom: 1rem;
       background-color: #f8f9fa;
+      transition: all 0.2s;
+    }
+    .order-item:hover {
+      border-color: #fd7e14;
+      background-color: #fff;
     }
     .footer {
       background-color: #212529;
@@ -81,12 +102,32 @@
       text-align: center;
       font-size: 0.9rem;
     }
+    /* 提示文本样式 */
+    .tip-text {
+      font-size: 0.85rem;
+      margin-top: 0.25rem;
+    }
+    .tip-success {
+      color: #28a745;
+    }
+    .tip-error {
+      color: #dc3545;
+    }
+    .tip-loading {
+      color: #fd7e14;
+    }
+    .hidden {
+      display: none;
+    }
     @media (max-width: 768px) {
       .main-content {
         padding: 1rem 0;
       }
       .card-body {
         padding: 1rem;
+      }
+      .order-item {
+        padding: 0.75rem;
       }
     }
   </style>
@@ -141,14 +182,25 @@
       <form id="orderForm">
         <div class="row g-3 mb-4">
           <div class="col-md-6">
-            <label for="cId" class="form-label">顾客ID *</label>
-            <input type="number" class="form-control" id="cId" name="cId" min="1" required>
-            <div class="form-text">请输入顾客ID</div>
+            <label for="cid" class="form-label required">顾客ID *</label>
+            <div class="input-group">
+              <input type="number" class="form-control" id="cid" name="cid" min="1" required>
+              <!-- 手动查询折扣按钮 -->
+              <button type="button" class="btn btn-outline-primary" onclick="getCustomerDiscount()">
+                查询折扣
+              </button>
+            </div>
+            <!-- 提示文本 -->
+            <div id="cidTip" class="tip-text hidden"></div>
+            <div class="form-text">请输入已存在的顾客ID（整数）</div>
           </div>
           <div class="col-md-6">
-            <label for="discount" class="form-label">折扣 (%)</label>
-            <input type="number" class="form-control" id="discount" name="discount" min="0" max="100" value="0">
-            <div class="form-text">可选，输入0-100之间的折扣百分比</div>
+            <label for="discount" class="form-label">折扣</label>
+            <!-- 核心修改1：添加disabled属性，禁用手动修改 -->
+            <input type="number" class="form-control" id="discount" name="discount_show" min="0" max="1" step="0.01" value="1.0" disabled>
+            <!-- 核心修改2：新增隐藏字段，用于提交真实折扣值（disabled的输入框不会被提交） -->
+            <input type="hidden" id="discount_hidden" name="discount" value="1.0">
+            <div class="form-text">折扣由顾客等级自动生成，不可手动修改</div>
           </div>
         </div>
 
@@ -168,12 +220,12 @@
         <div class="row g-3">
           <div class="col-md-12">
             <label for="remark" class="form-label">备注</label>
-            <textarea class="form-control" id="remark" name="remark" rows="3"></textarea>
+            <textarea class="form-control" id="remark" name="remark" rows="3" placeholder="可选：订单备注信息"></textarea>
           </div>
         </div>
 
         <div class="mt-4">
-          <button type="submit" class="btn btn-success me-2">创建订单</button>
+          <button type="submit" class="btn btn-success me-2" id="submitBtn">创建订单</button>
           <button type="button" class="btn btn-secondary" onclick="goBack()">返回列表</button>
         </div>
       </form>
@@ -194,6 +246,7 @@
 <!-- 自定义JS逻辑 -->
 <script>
   let itemCounter = 0;
+  const contextPath = '/fruitshop';
 
   // 表单提交事件
   $('#orderForm').on('submit', function(e) {
@@ -201,105 +254,173 @@
     createOrder();
   });
 
+  // 手动触发查询折扣
+  function getCustomerDiscount() {
+    const cId = $('#cid').val().trim();
+    const tipDom = $('#cidTip');
+
+    // 清空原有提示
+    tipDom.removeClass('tip-success tip-error tip-loading').addClass('hidden').text('');
+
+    // 基础校验
+    if (!cId || cId <= 0) {
+      tipDom.removeClass('hidden').addClass('tip-error').text('请输入有效的顾客ID（正整数）');
+      return;
+    }
+
+    // 显示加载提示
+    tipDom.removeClass('hidden').addClass('tip-loading').text('正在查询顾客折扣...');
+
+    // 调用后端接口
+    axios.get(`${contextPath}/api/customer/discount/${cId}`)
+            .then(res => {
+              tipDom.removeClass('tip-loading');
+              if (res.data && res.data.code === 200) {
+                // 成功：填充禁用的显示框 + 同步更新隐藏字段
+                const discount = res.data.data;
+                $('#discount').val(discount); // 禁用的显示框
+                $('#discount_hidden').val(discount); // 隐藏字段（用于提交）
+                tipDom.addClass('tip-success').text(`查询成功！该顾客折扣为${discount*10}折`);
+              } else {
+                // 失败：重置为默认折扣
+                $('#discount').val(1.0);
+                $('#discount_hidden').val(1.0);
+                tipDom.addClass('tip-error').text(res.data?.message || '查询失败');
+              }
+            })
+            .catch(err => {
+              tipDom.removeClass('tip-loading').addClass('tip-error');
+              // 捕获所有异常
+              if (err.response) {
+                tipDom.text(`查询失败：${err.response.data?.message || '接口返回异常'}`);
+              } else if (err.request) {
+                tipDom.text('查询失败：无法连接到服务器');
+              } else {
+                tipDom.text(`查询失败：${err.message}`);
+              }
+              // 重置为默认折扣
+              $('#discount').val(1.0);
+              $('#discount_hidden').val(1.0);
+            });
+  }
+
   // 添加订单商品项
   function addOrderItem() {
     itemCounter++;
     const itemHtml = `
-            <div class="order-item" id="item-${itemCounter}">
-                <div class="row g-3">
-                    <div class="col-md-5">
-                        <label class="form-label">水果ID *</label>
-                        <input type="number" class="form-control item-fid" name="items[${itemCounter-1}].fId" min="1" required>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">数量 *</label>
-                        <input type="number" class="form-control item-qty" name="items[${itemCounter-1}].quantity" min="1" value="1" required>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">&nbsp;</label>
-                        <button type="button" class="btn btn-sm btn-outline-danger w-100" onclick="removeOrderItem(${itemCounter})">删除</button>
-                    </div>
-                </div>
-            </div>
-        `;
-
+      <div class="order-item" id="item-${itemCounter}">
+        <div class="row g-3">
+          <div class="col-md-5">
+            <label class="form-label required">水果ID *</label>
+            <input type="text" class="form-control item-fid" name="items[${itemCounter-1}].fid" placeholder="例如：a1、b2" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label required">数量 *</label>
+            <input type="number" class="form-control item-qty" name="items[${itemCounter-1}].quantity" min="1" value="1" required>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">&nbsp;</label>
+            <button type="button" class="btn btn-sm btn-outline-danger w-100" onclick="removeOrderItem(${itemCounter})">删除</button>
+          </div>
+        </div>
+      </div>
+    `;
     $('#orderItemsContainer').append(itemHtml);
   }
 
   // 移除订单商品项
   function removeOrderItem(itemId) {
     $(`#item-${itemId}`).remove();
+    resetItemIndex();
+  }
+
+  // 重置商品项索引
+  function resetItemIndex() {
+    $('.order-item').each(function(index) {
+      $(this).find('.item-fid').attr('name', `items[${index}].fid`);
+      $(this).find('.item-qty').attr('name', `items[${index}].quantity`);
+    });
   }
 
   // 创建订单
   function createOrder() {
+    const submitBtn = $('#submitBtn');
+    if (submitBtn.prop('disabled')) return;
+    submitBtn.prop('disabled', true).text('提交中...');
+
     // 收集表单数据
     const orderData = {
-      cId: parseInt($('#cId').val()),
-      discount: parseFloat($('#discount').val()) || 0,
+      cid: parseInt($('#cid').val()),
+      // 核心：读取隐藏字段的折扣值（而非禁用的显示框）
+      discount: parseFloat($('#discount_hidden').val()) || 1.0,
       remark: $('#remark').val().trim(),
       items: []
     };
 
     // 收集商品项数据
-    $('.order-item').each(function(index) {
-      const fId = $(this).find('.item-fid').val();
+    $('.order-item').each(function() {
+      const fid = $(this).find('.item-fid').val().trim();
       const quantity = $(this).find('.item-qty').val();
-
-      if (fId && quantity) {
+      if (fid && quantity) {
         orderData.items.push({
-          fId: parseInt(fId),
+          fid: fid,
           quantity: parseInt(quantity)
         });
       }
     });
 
-    // 前端验证
-    if (!orderData.cId || orderData.cId <= 0) {
-      alert('请输入有效的顾客ID');
-      return;
-    }
-
-    if (orderData.items.length === 0) {
-      alert('请至少添加一个商品');
-      return;
-    }
-
-    // 检查每个商品项
-    for (let i = 0; i < orderData.items.length; i++) {
-      const item = orderData.items[i];
-      if (!item.fId || item.fId <= 0) {
-        alert(`第${i+1}个商品的水果ID无效`);
-        return;
+    // 前端严格验证
+    try {
+      if (!orderData.cid || orderData.cid <= 0) {
+        throw new Error('请输入有效的顾客ID（正整数）');
       }
-      if (!item.quantity || item.quantity <= 0) {
-        alert(`第${i+1}个商品的数量必须大于0`);
-        return;
+      if (orderData.discount < 0 || orderData.discount > 1) {
+        throw new Error('折扣率需在0-1之间（如0.9=9折）');
       }
+      if (orderData.items.length === 0) {
+        throw new Error('请至少添加一个商品');
+      }
+      orderData.items.forEach((item, index) => {
+        if (!item.fid) {
+          throw new Error(`第${index+1}个商品：水果ID不能为空（格式如a1、b2）`);
+        }
+        if (!item.quantity || item.quantity <= 0) {
+          throw new Error(`第${index+1}个商品：数量必须为正整数`);
+        }
+      });
+    } catch (e) {
+      alert(e.message);
+      submitBtn.prop('disabled', false).text('创建订单');
+      return;
     }
 
     // 发送请求
-    axios.post('/fruitshop/api/order/create', orderData)
+    axios.post(`${contextPath}/api/order/create`, orderData)
             .then(res => {
-              if (res.data.code === 200) {
-                alert(`订单创建成功！订单号：${res.data.data}`);
-                // 重置表单
+              if (res.data && res.data.code === 200) {
+                alert(`订单创建成功！订单号：${res.data.data || '未知'}`);
                 $('#orderForm')[0].reset();
                 $('#orderItemsContainer').empty();
                 itemCounter = 0;
+                $('#cidTip').addClass('hidden').text('');
+                // 重置隐藏字段
+                $('#discount_hidden').val(1.0);
               } else {
-                alert('订单创建失败: ' + res.data.message);
+                alert('订单创建失败: ' + (res.data?.message || '未知错误'));
               }
             })
             .catch(err => {
-              console.error('订单创建失败:', err);
-              alert('订单创建失败');
+              console.error('订单创建失败详情:', err);
+              alert(`订单创建失败：${err.response?.data?.message || err.message || '网络异常'}`);
+            })
+            .finally(() => {
+              submitBtn.prop('disabled', false).text('创建订单');
             });
   }
 
   // 返回列表
   function goBack() {
-    window.location.href = '/fruitshop/order/list';
+    window.location.href = `${contextPath}/order/list`;
   }
 
   // 初始化第一个商品项

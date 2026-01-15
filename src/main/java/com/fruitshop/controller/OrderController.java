@@ -162,4 +162,20 @@ public class OrderController {
             return ResponseUtil. error("计算订单总额异常");
         }
     }
+    @GetMapping("/detail/{oNum}")
+    public ResponseUtil<?> getOrderDetail(@PathVariable Integer oNum) {
+        try {
+            log.info("查询订单详情请求: oNum={}", oNum);
+
+            OrderVO orderDetail = orderService.getOrderDetail(oNum);
+
+            return ResponseUtil.success("订单详情查询成功", orderDetail);
+        } catch (BusinessException e) {
+            log.error("查询订单详情失败:  {}", e.getMessage());
+            return ResponseUtil.error(400, e.getMessage());
+        } catch (Exception e) {
+            log.error("查询订单详情异常", e);
+            return ResponseUtil.error("查询订单详情异常");
+        }
+    }
 }

@@ -189,7 +189,7 @@
             <th>库存</th>
             <th>供应商</th>
             <th>描述</th>
-            <th>上架时间</th>
+            <!-- 移除了上架时间表头 -->
             <th>状态</th>
             <th>操作</th>
           </tr>
@@ -272,9 +272,10 @@
     tbody.empty();
 
     if (fruits.length === 0) {
+      // colspan从9改为8（移除了上架时间列）
       tbody.append(`
         <tr>
-            <td colspan="9" class="text-center text-muted">暂无水果数据</td>
+            <td colspan="8" class="text-center text-muted">暂无水果数据</td>
         </tr>
       `);
       return;
@@ -293,7 +294,7 @@
       const stockText = quantity <= 10 ? `${quantity} (库存不足)` : quantity;
       const statusText = quantity > 0 ? '有库存' : '缺货';
 
-      // 构建表格行（移除详情按钮）
+      // 构建表格行（移除了上架时间列）
       const row = `
         <tr>
             <td>${fId}</td>
@@ -302,7 +303,7 @@
             <td class="${stockClass}">${stockText}</td>
             <td>${sId}</td>
             <td>无描述</td>
-            <td>未知</td>
+            <!-- 移除了上架时间的td -->
             <td>${statusText}</td>
             <td>
                 <button class="btn btn-sm btn-outline-primary action-btn" onclick="editFruit('${fId}')">编辑</button>

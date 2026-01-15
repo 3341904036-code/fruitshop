@@ -21,6 +21,7 @@ public class Customer implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    @TableId
     private Integer cId;
 
     private String cName;

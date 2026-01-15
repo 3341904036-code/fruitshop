@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>编辑供应商 - 水果商城管理系统</title>
+  <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      min-height: 100vh;
+      font-family: "Microsoft YaHei", sans-serif;
+      background-color: #f8f9fa;
+    }
+    .navbar {
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      z-index: 1000;
+    }
+    .navbar-brand {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #fff !important;
+    }
+    .nav-link {
+      color: #fff !important;
+      transition: all 0.3s;
+    }
+    .nav-link:hover {
+      color: #ffc107 !important;
+    }
+    .main-content {
+      padding: 2rem 0;
+    }
+    .container {
+      max-width: 800px;
+    }
+    .card {
+      border: none;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      transition: all 0.3s ease;
+      overflow: hidden;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.12);
+    }
+    .card-header {
+      background-color: #6f42c1;
+      color: #fff;
+      font-weight: 600;
+      border-bottom: none;
+    }
+    .form-label.required::after {
+      content: '*';
+      color: #dc3545;
+      margin-left: 4px;
+    }
+    .form-control:disabled {
+      background-color: #e9ecef;
+      opacity: 1;
+      cursor: not-allowed;
+    }
+    .form-control {
+      border-radius: 6px;
+      padding: 0.75rem 1rem;
+    }
+    .btn {
+      border-radius: 6px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    .btn:hover {
+      transform: scale(1.02);
+    }
+    .footer {
+      background-color: #212529;
+      color: #fff;
+      padding: 1.5rem 0;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+    @media (max-width: 768px) {
+      .main-content {
+        padding: 1rem 0;}
+      .card-body {
+        padding: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+<!-- 导航栏：和水果编辑页一致 -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+  <div class="container">
+    <a class="navbar-brand" th:href="@{/index.html}">🍎 水果商城管理系统</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item">
+          <a class="nav-link" th:href="@{/index.html}">首页</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" th:href="@{/customer/list}">顾客管理</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" th:href="@{/fruit/list}">水果管理</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" th:href="@{/order/list}">订单管理</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link active" aria-current="page" th:href="@{/supplier/list}">供应商管理</a>
+        </li>
+      </ul>
+      <ul class="navbar-nav">
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+            <span th:text="${session.loginUser?.showName ?: '游客'}">顾客10099</span>
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" th:href="@{/api/auth/logout}">退出登录</a></li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- 主要内容区：字段名改用小写，和水果编辑页一致 -->
+<div class="main-content container">
+  <div class="card">
+    <div class="card-header">
+      <h5 class="mb-0">编辑供应商信息</h5>
+    </div>
+    <div class="card-body">
+      <!-- 隐藏域：存储URL中的供应商ID（小写sid） -->
+      <input type="hidden" id="urlSid" value="">
+
+      <form id="supplierEditForm">
+        <div class="row g-3">
+          <!-- 供应商ID：小写sid，不可修改 -->
+          <div class="col-md-6">
+            <label for="sid" class="form-label required">供应商ID *</label>
+            <input type="text" class="form-control" id="sid" name="sid" placeholder="例如：100、101" disabled readonly>
+            <div class="form-text">供应商唯一标识，不可修改</div>
+          </div>
+          <!-- 供应商名称：小写sname -->
+          <div class="col-md-6">
+            <label for="sname" class="form-label required">供应商名称 *</label>
+            <input type="text" class="form-control" id="sname" name="sname" placeholder="例如：JMU、FastFruit Inc." required>
+          </div>
+          <!-- 城市：小写scity -->
+          <div class="col-md-6">
+            <label for="scity" class="form-label required">所在城市 *</label>
+            <input type="text" class="form-control" id="scity" name="scity" placeholder="例如：Sanming、Tianjin" required>
+          </div>
+          <!-- 邮编：小写szip -->
+          <div class="col-md-6">
+            <label for="szip" class="form-label required">邮政编码 *</label>
+            <input type="text" class="form-control" id="szip" name="szip" placeholder="例如：365000、300000" required>
+          </div>
+          <!-- 联系电话：小写scall -->
+          <div class="col-md-12">
+            <label for="scall" class="form-label required">联系电话 *</label>
+            <input type="text" class="form-control" id="scall" name="scall" placeholder="例如：15960961335、48075" required>
+          </div>
+        </div>
+
+        <div class="mt-4">
+          <button type="submit" class="btn btn-primary me-2">保存修改</button>
+          <button type="button" class="btn btn-secondary" onclick="goBack()">返回列表</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- 页脚：和水果编辑页一致 -->
+<div class="footer">
+  <p class="mb-0">© 2026 水果商城管理系统 - 版权所有</p>
+</div>
+
+<!-- 引入JS资源：和水果编辑页一致 -->
+<script th:src="@{/js/jquery-3.6.4.min.js}"></script>
+<script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+<script th:src="@{/js/axios.min.js}"></script>
+
+<!-- 自定义JS逻辑：完全参考水果编辑页 -->
+<script>
+  // 上下文路径：和水果编辑页保持一致
+  const contextPath = '/fruitshop';
+  // 当前URL中的供应商ID（小写sid）
+  let currentSid = '';
+
+  $(document).ready(function() {
+    // 1. 解析URL中的供应商ID（和水果编辑页逻辑完全一致）
+    const pathParts = window.location.pathname.split('/').filter(part => part.trim() !== '');
+    const editIndex = pathParts.indexOf('edit');
+    if (editIndex === -1 || editIndex + 1 >= pathParts.length) {
+      alert('无效的供应商ID，请从列表页进入编辑');
+      goBack();
+      return;
+    }
+    currentSid = pathParts[editIndex + 1].trim().replace(/\s+/g, '');
+
+    if (!currentSid) {
+      alert('无效的供应商ID，请从列表页进入编辑');
+      goBack();
+      return;
+    }
+
+    // 2. 赋值到隐藏域和输入框（小写id）
+    $('#urlSid').val(currentSid);
+    $('#sid').val(currentSid);
+
+    // 3. 加载供应商详情（参考水果编辑页的简洁接口路径）
+    loadSupplierDetail(currentSid);
+  });
+
+  /**
+   * 加载供应商详情：参考水果编辑页，用简洁接口 /api/supplier/${sid}
+   */
+  function loadSupplierDetail(sid) {
+    axios.get(`${contextPath}/api/supplier/${sid}`)
+            .then(res => {
+              console.log("【供应商详情响应】", JSON.stringify(res.data, null, 2));
+              if (res.data && res.data.code === 200) {
+                const supplier = res.data.data;
+                // 兼容后端返回的驼峰/小写字段，填充到小写表单字段
+                $('#sname').val(supplier.sName || supplier.s_name || supplier.sname || '');
+                $('#scity').val(supplier.sCity || supplier.s_city || supplier.scity || '');
+                $('#szip').val(supplier.sZip || supplier.s_zip || supplier.szip || '');
+                $('#scall').val(supplier.sCall || supplier.s_call || supplier.scall || '');
+              } else {
+                alert('加载供应商详情失败: ' + (res.data?.message || '未知错误'));
+                goBack();
+              }
+            })
+            .catch(err => {
+              console.error('【加载供应商详情】请求失败：', err);
+              alert(`加载详情失败：${err.response?.data?.message || '供应商ID不存在'}`);
+              goBack();
+            });
+  }
+
+  /**
+   * 表单提交：参考水果编辑页的提交逻辑
+   */
+  $('#supplierEditForm').on('submit', function(e) {
+    e.preventDefault();
+    updateSupplier();
+  });
+
+  /**
+   * 提交修改：核心！字段名用小写，和水果编辑页一致
+   */
+  function updateSupplier() {
+    // 1. 获取URL中的供应商ID（确保非空）
+    const sid = $('#urlSid').val().trim().replace(/\s+/g, '');
+    if (!sid) {
+      alert('供应商ID为空，无法修改！');
+      return;
+    }
+
+    // 2. 获取表单值：字段名全小写，和水果编辑页一致
+    const supplierData = {
+      sid: sid,                              // 小写sid
+      sname: $('#sname').val().trim(),       // 小写sname
+      scity: $('#scity').val().trim(),       // 小写scity
+      szip: $('#szip').val().trim(),         // 小写szip
+      scall: $('#scall').val().trim()        // 小写scall
+    };
+
+    // 3. 前端验证：和水果编辑页一致的风格
+    if (!supplierData.sname) {
+      alert('请输入供应商名称');
+      $('#sname').focus();
+      return;
+    }
+    if (!supplierData.scity) {
+      alert('请输入所在城市');
+      $('#scity').focus();
+      return;
+    }
+    if (!supplierData.szip) {
+      alert('请输入邮政编码');
+      $('#szip').focus();
+      return;
+    }
+    if (!supplierData.scall) {
+      alert('请输入联系电话');
+      $('#scall').focus();
+      return;
+    }
+
+    // 4. 打印提交数据，方便调试
+    console.log("【提交供应商修改数据】", JSON.stringify(supplierData, null, 2));
+
+    // 5. 发送请求：参考水果编辑页的请求格式（PUT方法）
+    axios({
+      method: 'PUT',
+      url: `${contextPath}/api/supplier/update`,
+      data: supplierData,
+      headers: {
+        'Content-Type': 'application/json;charset=utf-8'
+      }
+    })
+            .then(res => {
+              if (res.data && res.data.code === 200) {
+                alert('供应商信息修改成功！');
+                goBack();
+              } else {
+                alert('修改失败: ' + (res.data?.message || '未知错误'));
+              }
+            })
+            .catch(err => {
+              console.error('【修改供应商】请求失败：', err);
+              alert(`修改失败：${err.response?.data?.message || '请检查字段是否填写正确'}`);
+            });
+  }
+
+  /**
+   * 返回列表：参考水果编辑页
+   */
+  function goBack() {
+    window.location.href = `${contextPath}/supplier/list`;
+  }
+</script>
+</body>
+</html>

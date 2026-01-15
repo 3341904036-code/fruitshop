@@ -34,6 +34,6 @@ public interface FruitMapper extends BaseMapper<Fruit> {
     /**
      * 更新水果库存
      */
-    @Update("UPDATE fruits SET quantity = quantity - #{qty} WHERE f_id = #{fId}")
-    int updateQuantity(String fId, Integer qty);
+    @Update("UPDATE fruits SET quantity = quantity - #{reduceQty} WHERE f_id = #{fId}")
+    int updateQuantity(String fId, Integer reduceQty);
 }

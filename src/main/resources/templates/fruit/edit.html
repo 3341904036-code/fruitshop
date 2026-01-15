@@ -64,6 +64,11 @@
             color: #dc3545;
             margin-left: 4px;
         }
+        .form-control:disabled {
+            background-color: #e9ecef;
+            opacity: 1;
+            cursor: not-allowed;
+        }
         .btn {
             border-radius: 6px;
             font-weight: 500;
@@ -79,10 +84,6 @@
             text-align: center;
             font-size: 0.9rem;
         }
-        .alert {
-            border-radius: 6px;
-            margin-bottom: 1rem;
-        }
         @media (max-width: 768px) {
             .main-content {
                 padding: 1rem 0;
@@ -94,7 +95,7 @@
     </style>
 </head>
 <body>
-<!-- 导航栏 -->
+<!-- 导航栏：和add.html保持一致 -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
     <div class="container">
         <a class="navbar-brand" th:href="@{/index.html}">🍎 水果商城管理系统</a>
@@ -133,51 +134,49 @@
     </div>
 </nav>
 
-<!-- 主要内容区 -->
+<!-- 主要内容区：字段名和add.html完全对齐（小写） -->
 <div class="main-content container">
     <div class="card">
         <div class="card-header">
             <h5 class="mb-0">编辑水果信息</h5>
         </div>
         <div class="card-body">
-            <!-- 加载失败提示 -->
-            <div id="loadError" class="alert alert-danger d-none" role="alert">
-                加载水果数据失败，请返回列表重试！
-            </div>
+            <!-- 隐藏域：存储URL中的水果ID（小写fid，和add一致） -->
+            <input type="hidden" id="urlFid" value="">
 
-            <!-- 表单区域 -->
-            <form id="fruitEditForm" class="d-none">
+            <form id="fruitEditForm">
                 <div class="row g-3">
-                    <!-- 水果ID：只读（不可修改） -->
+                    <!-- 水果ID：小写fid，和add.html一致，不可修改 -->
                     <div class="col-md-6">
-                        <label for="fid" class="form-label required">水果ID</label>
-                        <input type="text" class="form-control" id="fid" name="fid" readonly>
+                        <label for="fid" class="form-label required">水果ID *</label>
+                        <input type="text" class="form-control" id="fid" name="fid" placeholder="例如：d1、z3" disabled readonly>
                         <div class="form-text">水果唯一标识，不可修改</div>
                     </div>
+                    <!-- 水果名称：小写fname，和add.html一致 -->
                     <div class="col-md-6">
                         <label for="fname" class="form-label required">水果名称 *</label>
-                        <input type="text" class="form-control" id="fname" name="fname" required>
+                        <input type="text" class="form-control" id="fname" name="fname" placeholder="例如：apple、香蕉" required>
                     </div>
+                    <!-- 价格：小写fprice，和add.html一致 -->
                     <div class="col-md-6">
                         <label for="fprice" class="form-label required">价格 *</label>
-                        <input type="number" class="form-control" id="fprice" name="fprice" step="0.01" min="0" required>
+                        <input type="number" class="form-control" id="fprice" name="fprice" step="0.01" min="0" placeholder="例如：5.2、10.5" required>
                     </div>
+                    <!-- 库存：小写quantity，和add.html一致 -->
                     <div class="col-md-6">
                         <label for="quantity" class="form-label required">库存 *</label>
                         <input type="number" class="form-control" id="quantity" name="quantity" min="0" required>
                     </div>
+                    <!-- 供应商ID：小写sid，和add.html一致 -->
                     <div class="col-md-6">
                         <label for="sid" class="form-label required">供应商ID *</label>
-                        <input type="number" class="form-control" id="sid" name="sid" min="1" required>
+                        <input type="number" class="form-control" id="sid" name="sid" min="1" placeholder="例如：101、102" required>
                         <div class="form-text">请输入已存在的供应商ID（100-107）</div>
                     </div>
+                    <!-- 描述：和add.html一致 -->
                     <div class="col-md-6">
                         <label for="description" class="form-label">描述</label>
                         <textarea class="form-control" id="description" name="description" rows="1" placeholder="可选：水果描述信息"></textarea>
-                    </div>
-                    <div class="col-md-12">
-                        <label for="remark" class="form-label">备注</label>
-                        <input type="text" class="form-control" id="remark" name="remark" placeholder="可选：其他备注信息">
                     </div>
                 </div>
 
@@ -190,7 +189,7 @@
     </div>
 </div>
 
-<!-- 页脚 -->
+<!-- 页脚：和add.html保持一致 -->
 <div class="footer">
     <p class="mb-0">© 2026 水果商城管理系统 - 版权所有</p>
 </div>
@@ -200,92 +199,67 @@
 <script th:src="@{/js/bootstrap.bundle.min.js}"></script>
 <script th:src="@{/js/axios.min.js}"></script>
 
+<!-- 自定义JS逻辑：完全对齐add.html的字段名（小写） -->
 <script>
-    // 上下文路径（与列表页/添加页保持一致）
+    // 上下文路径：和add.html保持一致
     const contextPath = '/fruitshop';
+    // 当前URL中的水果ID（小写fid）
+    let currentFid = '';
 
-    // 从URL解析水果ID（兼容不同路径格式）
-    const pathParts = window.location.pathname.split('/');
-    const fid = pathParts[pathParts.length - 1] || '';
-
-    // 页面初始化：加载水果数据
     $(document).ready(function() {
-        // 校验ID是否有效
-        if (!fid) {
-            $('#loadError').text('无效的水果ID，请检查请求路径').removeClass('d-none');
+        // 1. 解析URL中的水果ID（和之前逻辑一致，但用小写变量）
+        const pathParts = window.location.pathname.split('/').filter(part => part.trim() !== '');
+        const editIndex = pathParts.indexOf('edit');
+        if (editIndex === -1 || editIndex + 1 >= pathParts.length) {
+            alert('无效的水果ID，请从列表页进入编辑');
+            goBack();
             return;
         }
-        loadFruitData();
+        currentFid = pathParts[editIndex + 1].trim().replace(/\s+/g, '');
+
+        if (!currentFid) {
+            alert('无效的水果ID，请从列表页进入编辑');
+            goBack();
+            return;
+        }
+
+        // 2. 赋值到隐藏域和输入框（小写id，和add一致）
+        $('#urlFid').val(currentFid);
+        $('#fid').val(currentFid);
+
+        // 3. 加载水果详情（兼容后端返回的字段名）
+        loadFruitDetail(currentFid);
     });
 
     /**
-     * 加载要编辑的水果数据（优先详情接口，降级列表接口）
+     * 加载水果详情：兼容后端返回的字段名，填充到小写表单字段
      */
-    function loadFruitData() {
-        // 显示加载状态（可选，提升体验）
-        $('#loadError').text('正在加载数据...').removeClass('d-none').removeClass('alert-danger').addClass('alert-info');
-
-        // 优先调用详情接口
-        axios.get(`${contextPath}/api/fruit/detail/${fid}`)
+    function loadFruitDetail(fid) {
+        axios.get(`${contextPath}/api/fruit/${fid}`)
             .then(res => {
-                if (res.data && res.data.code === 200 && res.data.data) {
-                    renderFruitForm(res.data.data);
-                    $('#loadError').addClass('d-none');
+                console.log("【完整响应数据】", JSON.stringify(res.data, null, 2));
+                if (res.data && res.data.code === 200) {
+                    const fruit = res.data.data;
+                    // 兼容后端返回的驼峰/下划线字段名，填充到小写表单字段
+                    $('#fname').val(fruit.fName || fruit.f_name || fruit.fname || '');
+                    $('#fprice').val(fruit.fPrice || fruit.f_price || fruit.fprice || 0);
+                    $('#quantity').val(fruit.quantity || 0);
+                    $('#sid').val(fruit.sId || fruit.s_id || fruit.sid || '');
+                    $('#description').val(fruit.description || '');
                 } else {
-                    throw new Error(res.data?.message || '详情接口返回无有效数据');
+                    alert('加载水果详情失败: ' + (res.data?.message || '未知错误'));
+                    goBack();
                 }
             })
             .catch(err => {
-                console.error('详情接口调用失败，尝试降级方案:', err);
-                fallbackLoadFruit();
+                console.error('【加载水果详情】请求失败：', err);
+                alert(`加载详情失败：${err.response?.data?.message || '水果ID不存在'}`);
+                goBack();
             });
     }
 
     /**
-     * 降级方案：从全量列表中筛选当前水果数据
-     */
-    function fallbackLoadFruit() {
-        axios.get(`${contextPath}/api/fruit/list/all`)
-            .then(res => {
-                if (res.data && res.data.code === 200 && Array.isArray(res.data.data)) {
-                    const fruits = res.data.data;
-                    const currentFruit = fruits.find(item => (item.fid === fid) || (item.fId === fid));
-
-                    if (currentFruit) {
-                        renderFruitForm(currentFruit);
-                        $('#loadError').addClass('d-none');
-                    } else {
-                        $('#loadError').text('未找到该水果数据，请返回列表重试').removeClass('d-none').removeClass('alert-info').addClass('alert-danger');
-                    }
-                } else {
-                    throw new Error('列表接口返回异常');
-                }
-            })
-            .catch(err => {
-                console.error('降级方案加载失败:', err);
-                $('#loadError').text('加载水果数据失败，请返回列表重试').removeClass('d-none').removeClass('alert-info').addClass('alert-danger');
-            });
-    }
-
-    /**
-     * 渲染表单数据（兼容后端驼峰/小写字段）
-     */
-    function renderFruitForm(fruit) {
-        // 兼容字段命名：优先小写，其次驼峰
-        $('#fid').val(fruit.fid || fruit.fId || '');
-        $('#fname').val(fruit.fname || fruit.fName || '');
-        $('#fprice').val(fruit.fprice || fruit.fPrice || 0);
-        $('#quantity').val(fruit.quantity || 0);
-        $('#sid').val(fruit.sid || fruit.sId || '');
-        $('#description').val(fruit.description || '');
-        $('#remark').val(fruit.remark || '');
-
-        // 显示表单
-        $('#fruitEditForm').removeClass('d-none');
-    }
-
-    /**
-     * 表单提交：更新水果信息
+     * 表单提交：和add.html一致的逻辑
      */
     $('#fruitEditForm').on('submit', function(e) {
         e.preventDefault();
@@ -293,32 +267,34 @@
     });
 
     /**
-     * 提交更新请求
+     * 提交修改：核心！字段名和add.html完全一致（小写）
      */
     function updateFruit() {
-        // 收集表单数据（兼容后端字段命名）
+        // 1. 获取URL中的水果ID（确保非空）
+        const fid = $('#urlFid').val().trim().replace(/\s+/g, '');
+        if (!fid) {
+            alert('水果ID为空，无法修改！');
+            return;
+        }
+
+        // 2. 获取表单值：字段名和add.html完全一致（小写）
         const fruitData = {
-            fId: $('#fid').val().trim(),       // 兼容后端驼峰字段
-            fid: $('#fid').val().trim(),       // 兼容后端小写字段
-            fName: $('#fname').val().trim(),   // 驼峰
-            fname: $('#fname').val().trim(),   // 小写
-            fPrice: parseFloat($('#fprice').val()), // 驼峰
-            fprice: parseFloat($('#fprice').val()), // 小写
-            sId: parseInt($('#sid').val()),    // 驼峰
-            sid: parseInt($('#sid').val()),    // 小写
-            quantity: parseInt($('#quantity').val()),
-            description: $('#description').val().trim(),
-            remark: $('#remark').val().trim()
+            fid: fid,                              // 小写fid，和add一致
+            fname: $('#fname').val().trim(),       // 小写fname，和add一致
+            fprice: parseFloat($('#fprice').val()),// 小写fprice，和add一致
+            sid: parseInt($('#sid').val()),        // 小写sid，和add一致
+            quantity: parseInt($('#quantity').val()),// 小写quantity，和add一致
+            description: $('#description').val().trim()// 小写description，和add一致
         };
 
-        // 前端严格校验
+        // 3. 前端验证：和add.html完全一致
         if (!fruitData.fname) {
             alert('请输入水果名称');
             $('#fname').focus();
             return;
         }
         if (isNaN(fruitData.fprice) || fruitData.fprice < 0) {
-            alert('请输入有效的非负价格（如：0.01、10.5）');
+            alert('请输入有效的非负价格（如5.2、10.0）');
             $('#fprice').focus();
             return;
         }
@@ -333,24 +309,35 @@
             return;
         }
 
-        // 提交更新请求
-        axios.post(`${contextPath}/api/fruit/update`, fruitData)
+        // 4. 打印提交数据，方便调试
+        console.log("【提交修改数据】", JSON.stringify(fruitData, null, 2));
+
+        // 5. 发送请求：和add.html一致的格式（POST/PUT均可，URL对应修改接口）
+        // 注意：如果后端修改接口是PUT /api/fruit/update 就用PUT；如果是POST就改成POST
+        axios({
+            method: 'PUT', // 或POST，和后端修改接口保持一致
+            url: `${contextPath}/api/fruit/update`,
+            data: fruitData,
+            headers: {
+                'Content-Type': 'application/json;charset=utf-8'
+            }
+        })
             .then(res => {
                 if (res.data && res.data.code === 200) {
                     alert('水果信息修改成功！');
-                    window.location.href = `${contextPath}/fruit/list`; // 跳转列表页
+                    goBack();
                 } else {
                     alert('修改失败: ' + (res.data?.message || '未知错误'));
                 }
             })
             .catch(err => {
-                console.error('更新水果失败:', err);
-                alert(`修改失败：${err.response?.data?.message || '网络异常或后端服务未响应'}`);
+                console.error('【修改水果】请求失败：', err);
+                alert(`修改失败：${err.response?.data?.message || '请检查字段是否填写正确'}`);
             });
     }
 
     /**
-     * 返回水果列表页
+     * 返回列表：和add.html保持一致
      */
     function goBack() {
         window.location.href = `${contextPath}/fruit/list`;

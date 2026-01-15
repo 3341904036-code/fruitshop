@@ -6,6 +6,8 @@
     <title>水果商城管理系统 - 首页</title>
     <!-- 静态资源路径（自动适配context-path：/fruitshop） -->
     <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+    <!-- 引入bootstrap图标（用于按钮图标） -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <!-- 自定义样式（优化美观度） -->
     <style>
         /* 全局样式 */
@@ -113,7 +115,7 @@
     </style>
 </head>
 <body>
-<!-- 导航栏 -->
+<!-- 导航栏：确保供货商能看到供应商管理菜单 -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
     <div class="container">
         <a class="navbar-brand" th:href="@{/index.html}">🍎 水果商城管理系统</a>
@@ -125,16 +127,20 @@
                 <li class="nav-item">
                     <a class="nav-link active" aria-current="page" th:href="@{/index.html}">首页</a>
                 </li>
-                <li class="nav-item">
+                <!-- 顾客管理：仅管理员、客户可见 -->
+                <li class="nav-item" th:if="${session.loginUser?.roleName == 'Admin' or session.loginUser?.roleName == 'Cusm'}">
                     <a class="nav-link" th:href="@{/customer/list}">顾客管理</a>
                 </li>
+                <!-- 水果管理：所有角色可见 -->
                 <li class="nav-item">
                     <a class="nav-link" th:href="@{/fruit/list}">水果管理</a>
                 </li>
+                <!-- 订单管理：所有角色可见 -->
                 <li class="nav-item">
                     <a class="nav-link" th:href="@{/order/list}">订单管理</a>
                 </li>
-                <li class="nav-item">
+                <!-- 供应商管理：管理员 + 供货商可见（核心：确保供货商能看到） -->
+                <li class="nav-item" th:if="${session.loginUser?.roleName == 'Admin' or session.loginUser?.roleName == 'Supp'}">
                     <a class="nav-link" th:href="@{/supplier/list}">供应商管理</a>
                 </li>
             </ul>
@@ -155,16 +161,18 @@
 
 <!-- 主要内容区 -->
 <div class="main-content container">
-    <!-- 欢迎信息 -->
+    <!-- 欢迎信息：显示角色名称 -->
     <div class="alert alert-success mb-4" role="alert">
         <h4 class="alert-heading">欢迎回来，<span th:text="${session.loginUser?.showName ?: '游客'}">顾客10099</span>！</h4>
+        <p>当前角色：<span th:text="${session.loginUser?.roleName == 'Admin' ? '管理员' : (session.loginUser?.roleName == 'Cusm' ? '客户' : (session.loginUser?.roleName == 'Supp' ? '供货商' : '游客'))}">客户</span></p>
         <p>当前系统时间：<span id="currentTime"></span></p>
         <hr>
         <p class="mb-0">请选择顶部菜单进行业务操作，如有问题请联系系统管理员。</p>
     </div>
 
-    <!-- 数据概览卡片 -->
+    <!-- 数据概览卡片：新增供应商总数卡片（仅管理员/供货商可见） -->
     <div class="row g-4 mb-5">
+        <!-- 水果总数：所有角色可见 -->
         <div class="col-md-3 col-sm-6">
             <div class="card text-center">
                 <div class="card-header bg-info text-white">
@@ -176,6 +184,7 @@
                 </div>
             </div>
         </div>
+        <!-- 今日订单：所有角色可见 -->
         <div class="col-md-3 col-sm-6">
             <div class="card text-center">
                 <div class="card-header bg-warning text-white">
@@ -187,7 +196,8 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3 col-sm-6">
+        <!-- 顾客总数：仅管理员、客户可见 -->
+        <div class="col-md-3 col-sm-6" th:if="${session.loginUser?.roleName == 'Admin' or session.loginUser?.roleName == 'Cusm'}">
             <div class="card text-center">
                 <div class="card-header bg-success text-white">
                     <h5 class="mb-0">顾客总数</h5>
@@ -198,45 +208,44 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3 col-sm-6">
+        <!-- 供应商总数：仅管理员、供货商可见（新增，满足供货商查看供应商数据） -->
+        <div class="col-md-3 col-sm-6" th:if="${session.loginUser?.roleName == 'Admin' or session.loginUser?.roleName == 'Supp'}">
             <div class="card text-center">
-                <div class="card-header bg-danger text-white">
-                    <h5 class="mb-0">今日销售额</h5>
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">供应商总数</h5>
                 </div>
                 <div class="card-body">
-                    <h2 class="card-text text-danger mb-3" id="todaySales">¥--</h2>
-                    <a href="#" th:href="@{/order/list}" class="btn btn-danger btn-sm">查看详情</a>
+                    <h2 class="card-text text-primary mb-3" id="supplierCount">--</h2>
+                    <a href="#" th:href="@{/supplier/list}" class="btn btn-primary btn-sm">查看详情</a>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 快捷操作区（已移除添加顾客、添加供应商按钮） -->
+    <!-- 快捷操作区：按角色显示不同按钮 -->
     <div class="card mb-4">
         <div class="card-header">
             <h5 class="mb-0">快捷操作</h5>
         </div>
         <div class="card-body">
             <div class="row g-3">
-                <div class="col-md-3 col-sm-6">
+                <!-- 添加水果：仅管理员、供货商可见（客户无权限） -->
+                <div class="col-md-4 col-sm-6" th:if="${session.loginUser?.roleName == 'Admin' or session.loginUser?.roleName == 'Supp'}">
                     <a href="#" th:href="@{/fruit/add}" class="btn btn-primary w-100">
                         <i class="bi bi-plus-circle"></i> 添加水果
                     </a>
                 </div>
-                <div class="col-md-3 col-sm-6">
+                <!-- 新增订单：仅管理员、客户可见（供货商无权限） -->
+                <div class="col-md-4 col-sm-6" th:if="${session.loginUser?.roleName == 'Admin' or session.loginUser?.roleName == 'Cusm'}">
                     <a href="#" th:href="@{/order/add}" class="btn btn-primary w-100">
                         <i class="bi bi-cart-plus"></i> 新增订单
                     </a>
                 </div>
-                <div class="col-md-3 col-sm-6">
-                    <button class="btn btn-warning w-100" onclick="refreshData()">
-                        <i class="bi bi-arrow-clockwise"></i> 刷新数据
-                    </button>
-                </div>
-                <div class="col-md-3 col-sm-6">
-                    <button class="btn btn-info w-100" onclick="exportData()">
+                <!-- 导出报表：仅管理员可见 -->
+                <div class="col-md-4 col-sm-6" th:if="${session.loginUser?.roleName == 'Admin'}">
+                    <a href="#" th:href="@{/dashboard/export}" class="btn btn-info w-100">
                         <i class="bi bi-download"></i> 导出报表
-                    </button>
+                    </a>
                 </div>
             </div>
         </div>
@@ -271,33 +280,34 @@
     setInterval(updateTime, 1000);
     updateTime();
 
-    // 2. 刷新数据（模拟请求后端统计接口）
-    function refreshData() {
-        // 实际项目中替换为真实接口：/fruitshop/dashboard/statistics
-        axios.get('/fruitshop/dashboard/statistics')
-            .then(res => {
-                if (res.data.code === 200) {
-                    const data = res.data.data;
-                    document.getElementById('fruitCount').textContent = data.fruitCount || 0;
-                    document.getElementById('todayOrderCount').textContent = data.todayOrderCount || 0;
-                    document.getElementById('customerCount').textContent = data.customerCount || 0;
-                    document.getElementById('todaySales').textContent = '¥' + (data.todaySales || 0).toFixed(2);
-                    alert('数据刷新成功！');
-                }
-            })
-            .catch(() => {
-                alert('数据刷新失败，请稍后重试！');
-            });
-    }
-
-    // 3. 导出报表（占位逻辑）
+    // 2. 导出报表（仅管理员可操作，增加权限校验）
     function exportData() {
-        window.location.href = '/fruitshop/dashboard/export';
+        // 前端二次校验（防止手动调用）
+        const roleName = [[${session.loginUser?.roleName}]];
+        if (roleName !== 'Admin') {
+            alert('抱歉，仅管理员有权限导出报表！');
+            return;
+        }
+        window.location.href = '/fruitshop/api/dashboard/export?types=customers,fruits,orders,statistics&format=excel';
     }
 
-    // 页面加载时初始化数据
+    // 页面加载初始化：可扩展加载供应商总数数据
     $(document).ready(function() {
-        refreshData();
+        const roleName = [[${session.loginUser?.roleName}]];
+        console.log('当前登录角色：', roleName);
+
+        // 示例：如果是管理员/供货商，加载供应商总数
+        if (roleName === 'Admin' || roleName === 'Supp') {
+            // 这里可通过axios请求后端接口获取供应商总数
+            // 示例：模拟数据
+            document.getElementById('supplierCount').textContent = '10'; // 实际替换为接口返回值
+        }
+
+        // 模拟加载其他统计数据
+        document.getElementById('fruitCount').textContent = '21';
+        document.getElementById('todayOrderCount').textContent = '5';
+        document.getElementById('customerCount').textContent = roleName === 'Cusm' || roleName === 'Admin' ? '6' : '';
+        document.getElementById('todaySales').textContent = roleName === 'Admin' ? '¥1289' : '';
     });
 </script>
 </body>

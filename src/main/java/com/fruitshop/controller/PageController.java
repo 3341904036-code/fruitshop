@@ -100,6 +100,25 @@ public class PageController {
         return "dashboard/export";
     }
 
+    @GetMapping("/customer/edit/{cId}")
+    public String toCustomerEdit(@PathVariable String cId, Model model) {
+        // 传递登录用户信息（和其他页面保持一致）
+        addUserToModel(model);
+        // 可选：将顾客ID传入页面（前端也可通过URL解析）
+        model.addAttribute("cId", cId);
+        // 对应 templates/customer/edit.html 页面（需确保文件存在）
+        return "customer/edit";
+    }
+
+    @GetMapping("/supplier/edit/{sId}")
+    public String toSupplierEdit(@PathVariable String sId, Model model) {
+        // 传递登录用户信息（和其他页面保持一致）
+        addUserToModel(model);
+        // 可选：将供应商ID传入页面（前端也可通过URL解析，双重保障）
+        model.addAttribute("sId", sId);
+        // 对应 templates/supplier/edit.html 页面（需确保文件存在）
+        return "supplier/edit";
+    }
     /**
      * 将当前登录用户信息添加到模型中
      */

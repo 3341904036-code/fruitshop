@@ -92,6 +92,10 @@
       text-align: center;
       font-size: 0.9rem;
     }
+    .disabled-btn {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
     @media (max-width: 768px) {
       .main-content {
         padding: 1rem 0;
@@ -174,7 +178,7 @@
         </div>
       </div>
 
-      <!-- 表格 -->
+      <!-- 表格：移除注册时间列 -->
       <div class="table-responsive">
         <table class="table table-striped table-hover">
           <thead>
@@ -184,7 +188,6 @@
             <th>城市</th>
             <th>邮编</th>
             <th>联系电话</th>
-            <th>注册时间</th>
             <th>操作</th>
           </tr>
           </thead>
@@ -214,64 +217,87 @@
 <script th:src="@{/js/bootstrap.bundle.min.js}"></script>
 <script th:src="@{/js/axios.min.js}"></script>
 
-<!-- 自定义JS逻辑 -->
+<!-- 自定义JS逻辑：移除注册时间相关代码 + 详情按钮/函数 -->
 <script>
+  // 全局变量 - 和水果管理页面保持一致的结构
   let currentPage = 1;
   const pageSize = 10;
+  const contextPath = '/fruitshop'; // 统一上下文路径，和水果/订单页面保持一致
+  let allSuppliers = []; // 缓存所有供应商数据，用于前端搜索
 
   // 初始化页面
   $(document).ready(function() {
     loadSuppliers(currentPage);
   });
 
-  // 加载供应商列表
+  /**
+   * 加载供应商列表（适配水果管理页面逻辑）
+   */
   function loadSuppliers(page) {
     currentPage = page;
-    const url = `/fruitshop/api/supplier/list/all`;
+    const url = `${contextPath}/api/supplier/list/all`;
 
+    console.log("【加载供应商】请求URL：", url);
     axios.get(url)
             .then(res => {
-              if (res.data.code === 200) {
-                const suppliers = res.data.data || [];
-                renderSupplierTable(suppliers);
-                generatePagination(1, 1); // 简化分页，仅一页
+              console.log("【加载供应商】后端响应：", res);
+              if (res.data && res.data.code === 200) {
+                allSuppliers = res.data.data || []; // 缓存所有数据
+                renderSupplierTable(allSuppliers);
+                // 计算总页数，生成完整分页（和水果页面一致）
+                const totalPages = Math.ceil(allSuppliers.length / pageSize);
+                generatePagination(currentPage, totalPages);
               } else {
-                alert('获取供应商列表失败: ' + res.data.message);
+                alert('获取供应商列表失败: ' + (res.data?.message || '未知错误'));
               }
             })
             .catch(err => {
               console.error('加载供应商列表失败:', err);
-              alert('获取供应商列表失败');
+              alert(`获取供应商列表失败：${err.message || '网络异常'}`);
             });
   }
 
-  // 渲染供应商表格
+  /**
+   * 渲染供应商表格（移除注册时间列 + 详情按钮）
+   */
   function renderSupplierTable(suppliers) {
     const tbody = $('#supplierTableBody');
     tbody.empty();
 
     if (suppliers.length === 0) {
+      // 调整colspan为6（对应现有列数）
       tbody.append(`
                 <tr>
-                    <td colspan="7" class="text-center">暂无供应商数据</td>
+                    <td colspan="6" class="text-center text-muted">暂无供应商数据</td>
                 </tr>
             `);
       return;
     }
 
-    suppliers.forEach(supplier => {
+    // 分页截取数据（和水果页面一致）
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = Math.min(startIndex + pageSize, suppliers.length);
+    const paginatedSuppliers = suppliers.slice(startIndex, endIndex);
+
+    paginatedSuppliers.forEach(supplier => {
+      // 优化默认值显示，统一格式
+      const sId = supplier.sId || supplier.sid || '--';
+      const sName = supplier.sName || supplier.sname || '--';
+      const sCity = supplier.sCity || supplier.scity || '--';
+      const sZip = supplier.sZip || supplier.szip || '--';
+      const sCall = supplier.sCall || supplier.scall || '--';
+
+      // 移除注册时间列 + 详情按钮
       const row = `
                 <tr>
-                    <td>${supplier.sId || '--'}</td>
-                    <td>${supplier.sName || '--'}</td>
-                    <td>${supplier.sCity || '--'}</td>
-                    <td>${supplier.sZip || '--'}</td>
-                    <td>${supplier.sCall || '--'}</td>
-                    <td>${formatDate(supplier.createTime)}</td>
+                    <td>${sId}</td>
+                    <td>${sName}</td>
+                    <td>${sCity}</td>
+                    <td>${sZip}</td>
+                    <td>${sCall}</td>
                     <td>
-                        <button class="btn btn-sm btn-outline-primary action-btn" onclick="editSupplier(${supplier.sId})">编辑</button>
-                        <button class="btn btn-sm btn-outline-danger action-btn" onclick="deleteSupplier(${supplier.sId}, '${supplier.sName}')">删除</button>
-                        <button class="btn btn-sm btn-outline-info action-btn" onclick="viewDetails(${supplier.sId})">详情</button>
+                        <button class="btn btn-sm btn-outline-primary action-btn" onclick="editSupplier('${sId}')">编辑</button>
+                        <button class="btn btn-sm btn-outline-danger action-btn" onclick="deleteSupplier('${sId}', '${sName}')">删除</button>
                     </td>
                 </tr>
             `;
@@ -279,90 +305,132 @@
     });
   }
 
-  // 格式化日期
-  function formatDate(dateStr) {
-    if (!dateStr) return '--';
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('zh-CN');
-  }
-
-  // 编辑供应商
+  /**
+   * 编辑供应商（添加提示，和水果页面交互一致）
+   */
   function editSupplier(sId) {
-    window.location.href = `/fruitshop/supplier/edit/${sId}`;
+    if (!sId) {
+      alert('供应商ID不能为空！');
+      return;
+    }
+    // 跳转编辑页，统一上下文路径
+    window.location.href = `${contextPath}/supplier/edit/${sId}`;
   }
 
-  // 查看详情
-  function viewDetails(sId) {
-    window.location.href = `/fruitshop/supplier/detail/${sId}`;
-  }
-
-  // 删除供应商
+  /**
+   * 删除供应商（增强确认提示，和水果页面逻辑一致）
+   */
   function deleteSupplier(sId, sName) {
-    if (confirm(`确定要删除供应商 "${sName}" 吗？此操作不可撤销。`)) {
-      axios.delete(`/fruitshop/api/supplier/delete/${sId}`)
+    if (!sId) {
+      alert('供应商ID不能为空！');
+      return;
+    }
+    if (confirm(`确定要删除供应商 "${sName || 'ID:' + sId}" 吗？此操作不可撤销。`)) {
+      const deleteUrl = `${contextPath}/api/supplier/delete/${sId}`;
+      console.log("【删除供应商】请求URL：", deleteUrl);
+
+      axios.delete(deleteUrl)
               .then(res => {
-                if (res.data.code === 200) {
+                if (res.data && res.data.code === 200) {
                   alert('删除成功');
-                  loadSuppliers(currentPage);
+                  loadSuppliers(currentPage); // 重新加载当前页
                 } else {
-                  alert('删除失败: ' + res.data.message);
+                  alert('删除失败: ' + (res.data?.message || '未知错误'));
                 }
               })
               .catch(err => {
                 console.error('删除供应商失败:', err);
-                alert('删除失败');
+                // 友好的错误提示
+                if (err.response && err.response.status === 404) {
+                  alert('删除失败：供应商不存在');
+                } else if (err.response && err.response.status === 500) {
+                  alert('删除失败：服务器异常，请稍后重试');
+                } else {
+                  alert(`删除失败：${err.message || '网络异常'}`);
+                }
               });
     }
   }
 
-  // 搜索供应商
+  /**
+   * 搜索供应商（实现真实前端筛选，和水果页面一致）
+   */
   function searchSuppliers() {
-    const name = $('#searchName').val().trim();
-    const city = $('#searchCity').val().trim();
-    const call = $('#searchCall').val().trim();
+    const name = $('#searchName').val().trim().toLowerCase();
+    const city = $('#searchCity').val().trim().toLowerCase();
+    const call = $('#searchCall').val().trim().toLowerCase();
 
-    let url = '/fruitshop/api/supplier/list/all';
-    // 这里可以添加实际的搜索参数处理
+    // 前端筛选逻辑（如果后端无搜索接口）
+    let filteredSuppliers = allSuppliers;
 
-    axios.get(url)
-            .then(res => {
-              if (res.data.code === 200) {
-                const suppliers = res.data.data || [];
-                renderSupplierTable(suppliers);
-                generatePagination(1, 1);
-              } else {
-                alert('搜索失败: ' + res.data.message);
-              }
-            })
-            .catch(err => {
-              console.error('搜索供应商失败:', err);
-              alert('搜索失败');
-            });
+    // 按名称筛选
+    if (name) {
+      filteredSuppliers = filteredSuppliers.filter(s => {
+        const sName = (s.sName || s.sname || '').toLowerCase();
+        return sName.includes(name);
+      });
+    }
+
+    // 按城市筛选
+    if (city) {
+      filteredSuppliers = filteredSuppliers.filter(s => {
+        const sCity = (s.sCity || s.scity || '').toLowerCase();
+        return sCity.includes(city);
+      });
+    }
+
+    // 按电话筛选
+    if (call) {
+      filteredSuppliers = filteredSuppliers.filter(s => {
+        const sCall = (s.sCall || s.scall || '').toLowerCase();
+        return sCall.includes(call);
+      });
+    }
+
+    // 重新渲染表格和分页
+    renderSupplierTable(filteredSuppliers);
+    const totalPages = Math.ceil(filteredSuppliers.length / pageSize);
+    generatePagination(1, totalPages); // 搜索后回到第一页
   }
 
-  // 重置搜索
+  /**
+   * 重置搜索（恢复初始状态，和水果页面一致）
+   */
   function resetSearch() {
     $('#searchName').val('');
     $('#searchCity').val('');
     $('#searchCall').val('');
-    loadSuppliers(1);
+    loadSuppliers(1); // 重置后回到第一页
   }
 
-  // 生成分页
+  /**
+   * 生成分页（完整分页逻辑，和水果页面一致）
+   */
   function generatePagination(current, total) {
     const pagination = $('#pagination');
     pagination.empty();
 
-    // 简单分页实现
+    // 上一页
     const prevItem = `<li class="page-item ${current <= 1 ? 'disabled' : ''}">
             <a class="page-link" href="#" onclick="loadSuppliers(${Math.max(1, current - 1)})">上一页</a>
         </li>`;
+    pagination.append(prevItem);
 
+    // 页码（显示当前页前后2页，最多显示5个页码）
+    const startPage = Math.max(1, current - 2);
+    const endPage = Math.min(total, current + 2);
+
+    for (let i = startPage; i <= endPage; i++) {
+      const pageItem = `<li class="page-item ${i === current ? 'active' : ''}">
+              <a class="page-link" href="#" onclick="loadSuppliers(${i})">${i}</a>
+          </li>`;
+      pagination.append(pageItem);
+    }
+
+    // 下一页
     const nextItem = `<li class="page-item ${current >= total ? 'disabled' : ''}">
             <a class="page-link" href="#" onclick="loadSuppliers(${Math.min(total, current + 1)})">下一页</a>
         </li>`;
-
-    pagination.append(prevItem);
     pagination.append(nextItem);
   }
 </script>
